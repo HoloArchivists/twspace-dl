@@ -1,3 +1,4 @@
+"""Script designed to help download twitter spaces"""
 import argparse
 import re
 from urllib.parse import urlparse
@@ -6,9 +7,15 @@ import requests
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--id", type=str)
+    parser = argparse.ArgumentParser(
+        description="Script designed to help download twitter spaces"
+    )
+    parser.add_argument("-i", "--id", type=str, metavar="SPACE_ID")
     args = parser.parse_args()
+
+    response = requests.get(f"https://twitter.com/i/spaces/{args.id}/peek").text
+    last_line = response.splitlines()[-1]
+    guest_token = re.findall(r"(?<=gt\=)\d{19}", last_line)[0]
 
     params = {
         "variables": '{"id":"'
@@ -17,7 +24,7 @@ def main():
     }
     headers = {
         "authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
-        "x-guest-token": "1446600991122632705",
+        "x-guest-token": guest_token,
     }
     response = requests.get(
         "https://twitter.com/i/api/graphql/jyQ0_DEMZHeoluCgHJ-U5Q/AudioSpaceById",
