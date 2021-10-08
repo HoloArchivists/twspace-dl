@@ -1,6 +1,7 @@
 """Script designed to help download twitter spaces"""
 import argparse
 import re
+from json.decoder import JSONDecodeError
 from urllib.parse import urlparse
 
 import requests
@@ -32,8 +33,10 @@ def main():
         headers=headers,
     )
     metadata = response.json()
-    media_key = metadata["data"]["audioSpace"]["metadata"]["media_key"]
-    print(f"{media_key=}")
+    try:
+        media_key = metadata["data"]["audioSpace"]["metadata"]["media_key"]
+    except KeyError:
+        raise RuntimeError(metadata)
 
     headers = {
         "authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
@@ -43,11 +46,12 @@ def main():
         "https://twitter.com/i/api/1.1/live_video_stream/status/" + media_key,
         headers=headers,
     )
-    metadata = response.json()
+    try:
+        metadata = response.json()
+    except JSONDecodeError:
+        raise ValueError("Space has ended")
     dyn_url = metadata["source"]["location"]
-    print(f"{dyn_url=}")
     master_url = dyn_url.removesuffix("?type=live").replace("dynamic", "master")
-    print(f"{master_url=}")
 
     response = requests.get(master_url)
     playlist_suffix = response.text.splitlines()[3]
