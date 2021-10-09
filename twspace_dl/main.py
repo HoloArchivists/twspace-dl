@@ -7,7 +7,6 @@ from urllib.parse import urlparse
 
 import requests
 
-logging.basicConfig(level=logging.INFO)
 
 
 def main():
@@ -15,7 +14,10 @@ def main():
         description="Script designed to help download twitter spaces"
     )
     parser.add_argument("-i", "--id", type=str, metavar="SPACE_ID")
+    parser.add_argument('-v', '--verbose', action='store_true')
     args = parser.parse_args()
+
+    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
     response = requests.get("https://twitter.com/").text
     last_line = response.splitlines()[-1]
