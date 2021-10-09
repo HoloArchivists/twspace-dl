@@ -18,7 +18,7 @@ class TwspaceDL:
         self.id = space_id
         self.progress = 0
         self.total_segments: int
-        self.title: str
+        self.title = ""
 
     @property
     def _guest_token(self) -> str:
@@ -29,8 +29,9 @@ class TwspaceDL:
         return guest_token
 
     def write_metadata(self) -> None:
+        metadata = str(self.metadata)
         with open(f"{self.title}-{self.id}.json", "w", encoding="utf-8") as metadata_io:
-            metadata_io.write(str(self.metadata))
+            metadata_io.write(metadata)
             logging.info(f"{self.title}-{self.id}.json written to disk")
 
     @cached_property
@@ -71,11 +72,7 @@ class TwspaceDL:
         except KeyError as error:
             logging.error(metadata)
             raise RuntimeError(metadata) from error
-        self.title = (
-            metadata["data"]["audioSpace"]["metadata"]["title"]
-            if "title" in metadata["data"]["audioSpace"]["metadata"].keys()
-            else ""
-        )
+        self.title = metadata["data"]["audioSpace"]["metadata"]["title"]
         if metadata["data"]["audioSpace"]["metadata"]["state"] == "Ended":
             logging.error("Space has ended")
             sys.exit(1)
@@ -111,7 +108,7 @@ class TwspaceDL:
         return playlist_url
 
     @cached_property
-    def playlist_text(self):
+    def playlist_text(self) -> str:
         playlist_text = requests.get(self.playlist_url).text
         master_url_wo_file = self.master_url.removesuffix("master_playlist.m3u8")
         playlist_text = re.sub(r"(?=chunk)", master_url_wo_file, playlist_text)
@@ -122,7 +119,7 @@ class TwspaceDL:
             stream_io.write(self.playlist_text)
         logging.info(f"{self.title}-{self.id}.m3u8 written to disk")
 
-    def merge(self):
+    def merge(self) -> None:
         with open(f"{self.title}-{self.id}-tmp.aac", "wb") as final_io:
             for chunk in os.listdir("tmp"):
                 with open(os.path.join("tmp", chunk), "rb") as chunk_io:
@@ -145,7 +142,7 @@ class TwspaceDL:
         logging.info("finished merging")
         os.remove(f"{self.title}-{self.id}-tmp.aac")
 
-    def _download(self, url):
+    def _download(self, url: str) -> None:
         chunk = requests.get(url).content
         chunk_name = url.split("/")[-1]
         with open(f"tmp/{chunk_name}", "wb") as tmp_file:
@@ -153,7 +150,7 @@ class TwspaceDL:
         self.progress += 1
         print(f"{self.progress*100/self.total_segments}%", end="\r")
 
-    def download(self):
+    def download(self) -> None:
         segments = re.findall("https.*", self.playlist_text)
         self.total_segments = len(segments)
         logging.info("Total segments: %s", self.total_segments)
