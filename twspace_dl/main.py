@@ -170,11 +170,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Script designed to help download twitter spaces"
     )
-    parser.add_argument("-i", "--id", type=str, metavar="SPACE_ID")
+    parser.add_argument("space_id", type=str, metavar="SPACE_ID")
     parser.add_argument("-v", "--verbose", action="store_true")
-    parser.add_argument("-w", "--write-metadata", action="store_true")
+    parser.add_argument("-m", "--write-metadata", action="store_true")
     parser.add_argument(
-        "-u", "--url", action="store_true", help="display the master url"
+        "-w",
+        "--write-playlist",
+        action="store_true",
+        help="write the m3u8 used to download the stream",
+    )
+    parser.add_argument(
+        "-u", "--url", action="store_true", help="display the final url"
     )
     parser.add_argument("-s", "--skip-download", action="store_true")
     parser.add_argument("-k", "--keep-files", action="store_true")
@@ -182,17 +188,19 @@ if __name__ == "__main__":
         parser.print_help(sys.stderr)
         sys.exit(1)
     args = parser.parse_args()
-    if not args.id:
+    if not args.space_id:
         print("ID is required")
         sys.exit(1)
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
-    twspace_dl = TwspaceDL(args.id)
+    twspace_dl = TwspaceDL(args.space_id)
     if args.write_metadata:
         twspace_dl.write_metadata()
     if args.url:
-        print(twspace_dl.master_url)
+        print(twspace_dl.playlist_url)
+    if args.write_playlist:
+        twspace_dl.write_playlist()
     if not args.skip_download:
         try:
             twspace_dl.download()
