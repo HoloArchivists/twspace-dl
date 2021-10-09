@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 
 import requests
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 def main():
