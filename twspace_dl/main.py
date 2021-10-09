@@ -14,6 +14,7 @@ def main():
     )
     parser.add_argument("-i", "--id", type=str, metavar="SPACE_ID")
     parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument("-w", "--write-metadata", action="store_true")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
@@ -46,9 +47,10 @@ def main():
         raise RuntimeError(metadata)
 
     title = metadata["data"]["audioSpace"]["metadata"]["title"]
-    with open(f"{title}-{args.id}.json", "w") as metadata_io:
-        metadata_io.write(response.text)
-        logging.info("written metadata to disk")
+    if args.write_metadata:
+        with open(f"{title}-{args.id}.json", "w") as metadata_io:
+            metadata_io.write(response.text)
+            logging.info("written metadata to disk")
     if metadata["data"]["audioSpace"]["metadata"]["state"] == "Ended":
         logging.error("Space has ended")
         sys.exit(1)
