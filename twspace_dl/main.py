@@ -2,11 +2,10 @@
 import argparse
 import logging
 import re
-from json.decoder import JSONDecodeError
+import sys
 from urllib.parse import urlparse
 
 import requests
-
 
 
 def main():
@@ -14,7 +13,7 @@ def main():
         description="Script designed to help download twitter spaces"
     )
     parser.add_argument("-i", "--id", type=str, metavar="SPACE_ID")
-    parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
@@ -46,6 +45,14 @@ def main():
         logging.error(metadata)
         raise RuntimeError(metadata)
 
+    title = metadata["data"]["audioSpace"]["metadata"]["title"]
+    with open(f"{title}-{args.id}.json", "w") as metadata_io:
+        metadata_io.write(response.text)
+        logging.info("written metadata to disk")
+    if metadata["data"]["audioSpace"]["metadata"]["state"] == "Ended":
+        logging.error("Space has ended")
+        sys.exit(1)
+
     headers = {
         "authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
         "cookie": "auth_token=",
@@ -54,10 +61,7 @@ def main():
         "https://twitter.com/i/api/1.1/live_video_stream/status/" + media_key,
         headers=headers,
     )
-    try:
-        metadata = response.json()
-    except JSONDecodeError:
-        raise ValueError("Space has ended")
+    metadata = response.json()
     dyn_url = metadata["source"]["location"]
     logging.debug(dyn_url)
     master_url = dyn_url.removesuffix("?type=live").replace("dynamic", "master")
@@ -69,9 +73,10 @@ def main():
     playlist_text = requests.get(playlist_url).text
     master_url_wo_file = master_url.removesuffix("master_playlist.m3u8")
     playlist_text = re.sub(r"(?=chunk)", master_url_wo_file, playlist_text)
-    with open(args.id + ".m3u8", "w") as stream_io:
+    with open(f"{title}-{args.id}.m3u8", "w") as stream_io:
         stream_io.write(playlist_text)
     logging.info(f"{args.id}.m3u8 written to disk")
+    return 0
 
 
 if __name__ == "__main__":
