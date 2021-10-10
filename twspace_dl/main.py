@@ -136,7 +136,7 @@ class TwspaceDL:
             f"{self.title}-{self.id}-tmp.aac",
             "-c",
             "copy",
-            f"./{self.title}-{self.id}.aac",
+            f"./{self.title}-{self.id}.m4a",
         ]
         subprocess.run(command, check=True)
         logging.info("finished merging")
