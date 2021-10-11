@@ -155,7 +155,7 @@ class TwspaceDL:
             f"author={author}",
             "-metadata",
             f"episode_id={self.id}",
-            f"./{self.title}-{self.id}.aac",
+            f"./{self.title}-{self.id}.m4a",
         ]
         subprocess.run(command, check=True)
         logging.info("finished merging")
