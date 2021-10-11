@@ -14,8 +14,14 @@ import requests
 
 
 class TwspaceDL:
-    def __init__(self, space_id: str):
-        self.id = space_id
+    def __init__(self, url: str, threads: int):
+        if not url:
+            logging.warning("No space url given, file won't have any metadata")
+            self.id = "no_id"
+        else:
+            space_id = re.findall(r"(?<=spaces/)\w*", url)[0]
+            self.id = space_id
+        self.threads = threads
         self.progress = 0
         self.total_segments: int
         self.title = ""
@@ -73,13 +79,18 @@ class TwspaceDL:
             logging.error(metadata)
             raise RuntimeError(metadata) from error
         self.title = metadata["data"]["audioSpace"]["metadata"]["title"]
-        if metadata["data"]["audioSpace"]["metadata"]["state"] == "Ended":
-            logging.error("Space has ended")
-            sys.exit(1)
         return metadata
 
     @cached_property
     def master_url(self) -> str:
+        if self.metadata["data"]["audioSpace"]["metadata"]["state"] == "Ended":
+            logging.error(
+                (
+                    "Can't Download. Space has ended, can't retrieve master url. "
+                    "You can provide it with -f URL if you have it."
+                )
+            )
+            raise ValueError
         headers = {
             "authorization": (
                 "Bearer "
@@ -127,6 +138,8 @@ class TwspaceDL:
                         chunk_io,
                         final_io,
                     )
+        actual_metadata = self.metadata["data"]["audioSpace"]["metadata"]
+        author = actual_metadata["creator_results"]["result"]["legacy"]["name"]
         command = [
             "ffmpeg",
             "-y",
@@ -136,6 +149,12 @@ class TwspaceDL:
             f"{self.title}-{self.id}-tmp.aac",
             "-c",
             "copy",
+            "-metadata",
+            f"title={self.title}",
+            "-metadata",
+            f"author={author}",
+            "-metadata",
+            f"episode_id={self.id}",
             f"./{self.title}-{self.id}.aac",
         ]
         subprocess.run(command, check=True)
@@ -157,7 +176,7 @@ class TwspaceDL:
         print()
 
         os.makedirs("tmp", exist_ok=True)
-        with ThreadPoolExecutor(max_workers=12) as executor:
+        with ThreadPoolExecutor(max_workers=self.threads) as executor:
             executor.map(self._download, segments, timeout=60)
         logging.info("Finished downloading")
         self.merge()
@@ -167,21 +186,37 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Script designed to help download twitter spaces"
     )
-    parser.add_argument("-i", "--space-id", type=str, metavar="SPACE_ID")
+    parser.add_argument("-i", "--input-url", type=str, metavar="SPACE_URL")
     parser.add_argument(
         "-f",
-        "--from-url",
+        "--from-master-url",
         type=str,
         metavar="URL",
         help="use the master url for the processes(useful for ended spaces)",
     )
+    parser.add_argument(
+        "-t",
+        "--threads",
+        type=int,
+        metavar="THREADS",
+        help="number of threads to run the script with(default with max)",
+        default=os.cpu_count(),
+    )
     parser.add_argument("-v", "--verbose", action="store_true")
-    parser.add_argument("-m", "--write-metadata", action="store_true")
+    parser.add_argument(
+        "-m",
+        "--write-metadata",
+        action="store_true",
+        help="write the full metadata json to a file",
+    )
     parser.add_argument(
         "-w",
         "--write-playlist",
         action="store_true",
-        help="write the m3u8 used to download the stream",
+        help=(
+            "write the m3u8 used to download the stream"
+            "(e.g. if you want to use another downloader)"
+        ),
     )
     parser.add_argument(
         "-u", "--url", action="store_true", help="display the master url"
@@ -192,15 +227,15 @@ if __name__ == "__main__":
         parser.print_help(sys.stderr)
         sys.exit(1)
     args = parser.parse_args()
-    if not args.space_id and not args.from_url:
-        print("Either space id or final url should be provided")
+    if not args.input_url and not args.from_master_url:
+        print("Either space url or master url should be provided")
         sys.exit(1)
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
-    twspace_dl = TwspaceDL(args.space_id)
-    if args.from_url:
-        twspace_dl.master_url = args.from_url
+    twspace_dl = TwspaceDL(args.input_url, args.threads)
+    if args.from_master_url:
+        twspace_dl.master_url = args.from_master_url
     if args.write_metadata:
         twspace_dl.write_metadata()
     if args.url:
