@@ -208,6 +208,13 @@ if __name__ == "__main__":
     )
     parser.add_argument("-i", "--input-url", type=str, metavar="SPACE_URL")
     parser.add_argument(
+        "-w",
+        "--wait",
+        type=int,
+        metavar="TIME",
+        help="Wait for a space to end to download it",
+    )
+    parser.add_argument(
         "-f",
         "--from-master-url",
         type=str,
@@ -223,13 +230,6 @@ if __name__ == "__main__":
         default=os.cpu_count(),
     )
     parser.add_argument("-v", "--verbose", action="store_true")
-    parser.add_argument(
-        "-w",
-        "--wait",
-        type=int,
-        metavar="TIME",
-        help="Wait for a space to end to download it(default with 15s)",
-    )
     parser.add_argument(
         "-m",
         "--write-metadata",
