@@ -14,6 +14,8 @@ import requests
 
 
 class TwspaceDL:
+    """Downloader class for twitter spaces"""
+
     def __init__(self, url: str, threads: int):
         if not url:
             logging.warning("No space url given, file won't have any metadata")
@@ -42,6 +44,7 @@ class TwspaceDL:
 
     @cached_property
     def metadata(self) -> dict:
+        """Get space metadata"""
         params = {
             "variables": (
                 "{"
@@ -81,16 +84,25 @@ class TwspaceDL:
         self.title = metadata["data"]["audioSpace"]["metadata"]["title"]
         return metadata
 
+    def write_metadata(self) -> None:
+        """Write the metadata to a file"""
+        metadata = str(self.metadata)
+        with open(f"{self.title}-{self.id}.json", "w", encoding="utf-8") as metadata_io:
+            metadata_io.write(metadata)
+            logging.info(f"{self.title}-{self.id}.json written to disk")
+
     @cached_property
     def master_url(self) -> str:
-        if self.metadata["data"]["audioSpace"]["metadata"]["state"] == "Ended":
+        """Master URL for a space"""
+        metadata = self.metadata
+        if metadata["data"]["audioSpace"]["metadata"]["state"] == "Ended":
             logging.error(
                 (
                     "Can't Download. Space has ended, can't retrieve master url. "
                     "You can provide it with -f URL if you have it."
                 )
             )
-            raise ValueError
+            raise ValueError("Space Ended")
         headers = {
             "authorization": (
                 "Bearer "
@@ -99,7 +111,7 @@ class TwspaceDL:
             ),
             "cookie": "auth_token=",
         }
-        media_key = self.metadata["data"]["audioSpace"]["metadata"]["media_key"]
+        media_key = metadata["data"]["audioSpace"]["metadata"]["media_key"]
         response = requests.get(
             "https://twitter.com/i/api/1.1/live_video_stream/status/" + media_key,
             headers=headers,
@@ -112,6 +124,7 @@ class TwspaceDL:
 
     @cached_property
     def playlist_url(self) -> str:
+        """Get the URL containing the chunks filenames"""
         response = requests.get(self.master_url)
         playlist_suffix = response.text.splitlines()[3]
         domain = urlparse(self.master_url).netloc
@@ -120,17 +133,20 @@ class TwspaceDL:
 
     @cached_property
     def playlist_text(self) -> str:
+        """Modify the chunks URL using the master one to be able to download"""
         playlist_text = requests.get(self.playlist_url).text
         master_url_wo_file = self.master_url.removesuffix("master_playlist.m3u8")
         playlist_text = re.sub(r"(?=chunk)", master_url_wo_file, playlist_text)
         return playlist_text
 
     def write_playlist(self) -> None:
+        """Write the modified playlist for external use"""
         with open(f"{self.title}-{self.id}.m3u8", "w", encoding="utf-8") as stream_io:
             stream_io.write(self.playlist_text)
         logging.info(f"{self.title}-{self.id}.m3u8 written to disk")
 
     def merge(self) -> None:
+        """Merge the chunks in a single file"""
         with open(f"{self.title}-{self.id}-tmp.aac", "wb") as final_io:
             for chunk in os.listdir("tmp"):
                 with open(os.path.join("tmp", chunk), "rb") as chunk_io:
@@ -170,6 +186,7 @@ class TwspaceDL:
         print(f"{self.progress*100/self.total_segments}%", end="\r")
 
     def download(self) -> None:
+        """Download a twitter space"""
         segments = re.findall("https.*", self.playlist_text)
         self.total_segments = len(segments)
         logging.info("Total segments: %s", self.total_segments)

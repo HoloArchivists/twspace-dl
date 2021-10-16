@@ -1,4 +1,5 @@
-*.m3u8
 *.aac
+*.m3u8
+*.m4a
 *.json
 __pycache__
