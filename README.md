@@ -1,12 +1,24 @@
 # Twspace-dl
 
-A python script to download twitter space, only works on running spaces (for now).
+A python script to download twitter space.
+
+## Downloads
+
+[Linux](https://github.com/Ryu1845/twspace-dl/releases/latest/download/twspace_dl.bin)
+[Windows](https://github.com/Ryu1845/twspace-dl/releases/latest/download/twspace_dl.exe)
 
 ## Usage
 
-requires ffmpeg and the requests module
+The script downloads from the beginning to the moment you started the script.
+
+### Linux
 ```bash
-python twspace_dl/main.py space_id
+./twspace_dl.bin -i space_url
+```
+
+### Windows
+```batch
+.\twspace_dl.exe -i space_url
 ```
 
 ## Features
@@ -30,3 +42,4 @@ optional arguments:
   -s, --skip-download
   -k, --keep-files
 ```
+
