@@ -8,6 +8,7 @@ import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from functools import cached_property
+from time import sleep
 from urllib.parse import urlparse
 
 import requests
@@ -36,13 +37,7 @@ class TwspaceDL:
         logging.debug(guest_token)
         return guest_token
 
-    def write_metadata(self) -> None:
-        metadata = str(self.metadata)
-        with open(f"{self.title}-{self.id}.json", "w", encoding="utf-8") as metadata_io:
-            metadata_io.write(metadata)
-            logging.info(f"{self.title}-{self.id}.json written to disk")
-
-    @cached_property
+    @property
     def metadata(self) -> dict:
         """Get space metadata"""
         params = {
@@ -198,6 +193,14 @@ class TwspaceDL:
         logging.info("Finished downloading")
         self.merge()
 
+    def wait(self, time: int) -> None:
+        """Wait for a space end to download"""
+        logging.info(f"Checking for end each {time}s")
+        while self.metadata["data"]["audioSpace"]["metadata"]["state"] != "Ended":
+            sleep(time)
+            self.master_url
+        self.download()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -221,13 +224,20 @@ if __name__ == "__main__":
     )
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument(
+        "-w",
+        "--wait",
+        type=int,
+        metavar="TIME",
+        help="Wait for a space to end to download it(default with 15s)",
+    )
+    parser.add_argument(
         "-m",
         "--write-metadata",
         action="store_true",
         help="write the full metadata json to a file",
     )
     parser.add_argument(
-        "-w",
+        "-p",
         "--write-playlist",
         action="store_true",
         help=(
@@ -261,7 +271,10 @@ if __name__ == "__main__":
         twspace_dl.write_playlist()
     if not args.skip_download:
         try:
-            twspace_dl.download()
+            if args.wait:
+                twspace_dl.wait(args.wait)
+            else:
+                twspace_dl.download()
         except KeyboardInterrupt:
             logging.info("Download Interrupted")
         finally:
