@@ -111,7 +111,11 @@ class TwspaceDL:
             "https://twitter.com/i/api/1.1/live_video_stream/status/" + media_key,
             headers=headers,
         )
-        metadata = response.json()
+        try:
+            metadata = response.json()
+        except Exception as err:
+            raise RuntimeError("Space isn't available") from err
+
         dyn_url = metadata["source"]["location"]
         logging.debug(dyn_url)
         master_url = dyn_url.removesuffix("?type=live").replace("dynamic", "master")
