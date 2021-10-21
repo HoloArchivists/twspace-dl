@@ -7,7 +7,9 @@ import re
 import shutil
 import subprocess
 import sys
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from functools import cached_property
 from time import sleep
 from urllib.parse import urlparse
@@ -15,20 +17,65 @@ from urllib.parse import urlparse
 import requests
 
 
+# mostly taken from ytarchive
+class FormatInfo(dict):
+    """
+    Simple class to more easily keep track of what fields are available for
+    file name formatting
+    """
+
+    DEFAULT_FNAME_FORMAT = "[%(creator_name)s]%(title)s-%(id)s"
+
+    def __init__(self):
+        dict.__init__(
+            self,
+            {
+                "id": "",
+                "url": "",
+                "title": "",
+                "creator_name": "",
+                "creator_screen_name": "",
+                "start_date": "",
+            },
+        )
+
+    def set_info(self, metadata: dict) -> None:
+        root = defaultdict(str, metadata["data"]["audioSpace"]["metadata"])
+        self["id"] = root["rest_id"]
+        self["url"] = "https://twitter.com/spaces/" + self["id"]
+        self["title"] = root["title"]
+        self["creator_name"] = root["creator_results"]["result"]["legacy"]["name"]
+        self["creator_screen_name"] = root["creator_results"]["result"]["legacy"][
+            "screen_name"
+        ]
+        self["start_date"] = datetime.fromtimestamp(int(root["started_at"])/1000).strftime("%Y-%m-%d")
+
+    @staticmethod
+    def sterilize_fn(filename: str) -> str:
+        bad_chars = '<>:"/\\|?*'
+        for char in bad_chars:
+            filename.replace(char, "_")
+        return filename
+
+    def format(self, format_str: str) -> str:
+        return format_str % self
+
+
 class TwspaceDL:
     """Downloader class for twitter spaces"""
 
-    def __init__(self, url: str, threads: int):
+    def __init__(self, url: str, threads: int, format_str: str):
         if not url:
             logging.warning("No space url given, file won't have any metadata")
             self.id = "no_id"
+            self.format_str = "no_info"
         else:
             space_id = re.findall(r"(?<=spaces/)\w*", url)[0]
             self.id = space_id
+            self.format_str = format_str or FormatInfo.DEFAULT_FNAME_FORMAT
         self.threads = threads
         self.progress = 0
         self.total_segments: int
-        self.title = ""
 
     @property
     def _guest_token(self) -> str:
@@ -77,15 +124,22 @@ class TwspaceDL:
         except KeyError as error:
             logging.error(metadata)
             raise RuntimeError(metadata) from error
-        self.title = metadata["data"]["audioSpace"]["metadata"]["title"]
         return metadata
+
+    @cached_property
+    def filename(self):
+        format_info = FormatInfo()
+        format_info.set_info(self.metadata)
+        filename = format_info.format(self.format_str)
+        return filename
 
     def write_metadata(self) -> None:
         """Write the metadata to a file"""
-        metadata = str(self.metadata)
-        with open(f"{self.title}-{self.id}.json", "w", encoding="utf-8") as metadata_io:
+        metadata = json.dumps(self.metadata, indent=4)
+        filename = self.filename
+        with open(f"{filename}.json", "w", encoding="utf-8") as metadata_io:
             metadata_io.write(metadata)
-            logging.info(f"{self.title}-{self.id}.json written to disk")
+            logging.info(f"{filename}.json written to disk")
 
     @cached_property
     def master_url(self) -> str:
@@ -141,41 +195,43 @@ class TwspaceDL:
 
     def write_playlist(self) -> None:
         """Write the modified playlist for external use"""
-        with open(f"{self.title}-{self.id}.m3u8", "w", encoding="utf-8") as stream_io:
+        filename = self.filename
+        with open(f"{filename}.m3u8", "w", encoding="utf-8") as stream_io:
             stream_io.write(self.playlist_text)
-        logging.info(f"{self.title}-{self.id}.m3u8 written to disk")
+        logging.info(f"{filename}.m3u8 written to disk")
 
     def merge(self) -> None:
         """Merge the chunks in a single file"""
-        with open(f"{self.title}-{self.id}-tmp.aac", "wb") as final_io:
+        format_info = FormatInfo()
+        format_info.set_info(self.metadata)
+        filename = self.filename
+        tmp_fn = os.path.join("tmp", filename + "-list.txt")
+        with open(tmp_fn, "w", encoding="utf-8") as final_io:
             for chunk in os.listdir("tmp"):
-                with open(os.path.join("tmp", chunk), "rb") as chunk_io:
-                    shutil.copyfileobj(
-                        chunk_io,
-                        final_io,
-                    )
-        actual_metadata = self.metadata["data"]["audioSpace"]["metadata"]
-        author = actual_metadata["creator_results"]["result"]["legacy"]["name"]
+                final_io.write(f"file '{chunk}'\n")
         command = [
             "ffmpeg",
             "-y",
             "-v",
-            "warning",
+            "quiet",
+            "-f",
+            "concat",
+            "-safe",
+            "0",
             "-i",
-            f"{self.title}-{self.id}-tmp.aac",
+            tmp_fn,
             "-c",
             "copy",
             "-metadata",
-            f"title={self.title}",
+            f"title='{format_info['title']}'",
             "-metadata",
-            f"author={author}",
+            f"author='{format_info['creator_name']}'",
             "-metadata",
-            f"episode_id={self.id}",
-            f"./{self.title}-{self.id}.m4a",
+            f"episode_id='{self.id}'",
+            f"./'{filename}'.m4a",
         ]
         subprocess.run(command, check=True)
         logging.info("finished merging")
-        os.remove(f"{self.title}-{self.id}-tmp.aac")
 
     def _download(self, url: str) -> None:
         chunk = requests.get(url).content
@@ -215,6 +271,12 @@ if __name__ == "__main__":
         description="Script designed to help download twitter spaces"
     )
     parser.add_argument("-i", "--input-url", type=str, metavar="SPACE_URL")
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=str,
+        metavar="FORMAT_STR",
+    )
     parser.add_argument(
         "-w",
         "--wait",
@@ -268,7 +330,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
-    twspace_dl = TwspaceDL(args.input_url, args.threads)
+    twspace_dl = TwspaceDL(args.input_url, args.threads, args.output)
     if args.from_master_url:
         twspace_dl.master_url = args.from_master_url
     if args.write_metadata:

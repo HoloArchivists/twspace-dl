@@ -25,13 +25,14 @@ The script downloads from the beginning to the moment you started the script.
 ## Features
 Here's the output of the help option
 ```
-usage: main.py [-h] [-i SPACE_URL] [-w TIME] [-f URL] [-t THREADS] [-v] [-m] [-p] [-u] [-s] [-k]
+usage: main.py [-h] [-i SPACE_URL] [-o FORMAT_STR] [-w TIME] [-f URL] [-t THREADS] [-v] [-m] [-p] [-u] [-s] [-k]
 
 Script designed to help download twitter spaces
 
 optional arguments:
   -h, --help            show this help message and exit
   -i SPACE_URL, --input-url SPACE_URL
+  -o FORMAT_STR, --output FORMAT_STR
   -w TIME, --wait TIME  Wait for a space to end to download it
   -f URL, --from-master-url URL
                         use the master url for the processes(useful for ended spaces)
@@ -45,3 +46,14 @@ optional arguments:
   -k, --keep-files
 ```
 
+## Format
+You can use the following identifiers for the formatting
+```
+%(title)s
+%(id)s
+%(start_date)s
+%(creator_name)s
+%(creator_screen_name)s
+%(url)s
+```
+Example: `[%(creator_screen_name)s]-%(title)s|%(start_date)s`
