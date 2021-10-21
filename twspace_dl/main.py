@@ -1,5 +1,6 @@
 """Script designed to help download twitter spaces"""
 import argparse
+import json
 import logging
 import os
 import re
@@ -200,9 +201,12 @@ class TwspaceDL:
     def wait(self, time: int) -> None:
         """Wait for a space end to download"""
         logging.info(f"Checking for end each {time}s")
-        while self.metadata["data"]["audioSpace"]["metadata"]["state"] != "Ended":
+        while (
+            state := self.metadata["data"]["audioSpace"]["metadata"]["state"]
+        ) != "Ended":
             sleep(time)
-            self.master_url
+            if state == "Running":
+                self.master_url
         self.download()
 
 
