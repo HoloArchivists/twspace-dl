@@ -294,13 +294,6 @@ def get_args():
         metavar="FORMAT_STR",
     )
     parser.add_argument(
-        "-w",
-        "--wait",
-        type=int,
-        metavar="TIME",
-        help="Wait for a space to end to download it",
-    )
-    parser.add_argument(
         "-f",
         "--from-master-url",
         type=str,
