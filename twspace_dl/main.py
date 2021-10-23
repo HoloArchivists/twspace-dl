@@ -8,7 +8,7 @@ import shutil
 import subprocess
 import sys
 from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from functools import cached_property
 from urllib.parse import urlparse
@@ -270,7 +270,7 @@ class TwspaceDL:
                 + [f"{self.filename}.m4a"]
             )
 
-            with ProcessPoolExecutor(max_workers=self.threads) as executor:
+            with ThreadPoolExecutor(max_workers=self.threads) as executor:
                 executor.map(subprocess.run, (cmd_new, cmd_old), timeout=60)
             subprocess.run(cmd_final, check=True)
         else:
