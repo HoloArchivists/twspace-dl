@@ -8,10 +8,9 @@ import shutil
 import subprocess
 import sys
 from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 from functools import cached_property
-from time import sleep
 from urllib.parse import urlparse
 
 import requests
@@ -48,7 +47,9 @@ class FormatInfo(dict):
         self["creator_screen_name"] = root["creator_results"]["result"]["legacy"][
             "screen_name"
         ]
-        self["start_date"] = datetime.fromtimestamp(int(root["started_at"])/1000).strftime("%Y-%m-%d")
+        self["start_date"] = datetime.fromtimestamp(
+            int(root["started_at"]) / 1000
+        ).strftime("%Y-%m-%d")
 
     @staticmethod
     def sterilize_fn(filename: str) -> str:
@@ -77,7 +78,7 @@ class TwspaceDL:
         self.progress = 0
         self.total_segments: int
 
-    @property
+    @cached_property
     def _guest_token(self) -> str:
         response = requests.get("https://twitter.com/").text
         last_line = response.splitlines()[-1]
@@ -142,8 +143,7 @@ class TwspaceDL:
             logging.info(f"{filename}.json written to disk")
 
     @cached_property
-    def master_url(self) -> str:
-        """Master URL for a space"""
+    def dyn_url(self) -> str:
         metadata = self.metadata
         if metadata["data"]["audioSpace"]["metadata"]["state"] == "Ended":
             logging.error(
@@ -170,13 +170,18 @@ class TwspaceDL:
             metadata = response.json()
         except Exception as err:
             raise RuntimeError("Space isn't available") from err
-
         dyn_url = metadata["source"]["location"]
-        logging.debug(dyn_url)
-        master_url = dyn_url.removesuffix("?type=live").replace("dynamic", "master")
-        return master_url
+        return dyn_url
 
     @cached_property
+    def master_url(self) -> str:
+        """Master URL for a space"""
+        master_url = self.dyn_url.removesuffix("?type=live").replace(
+            "dynamic", "master"
+        )
+        return master_url
+
+    @property
     def playlist_url(self) -> str:
         """Get the URL containing the chunks filenames"""
         response = requests.get(self.master_url)
@@ -185,7 +190,7 @@ class TwspaceDL:
         playlist_url = f"https://{domain}{playlist_suffix}"
         return playlist_url
 
-    @cached_property
+    @property
     def playlist_text(self) -> str:
         """Modify the chunks URL using the master one to be able to download"""
         playlist_text = requests.get(self.playlist_url).text
@@ -193,33 +198,33 @@ class TwspaceDL:
         playlist_text = re.sub(r"(?=chunk)", master_url_wo_file, playlist_text)
         return playlist_text
 
-    def write_playlist(self) -> None:
+    def write_playlist(self, save_dir: str = "./") -> None:
         """Write the modified playlist for external use"""
         filename = self.filename
-        with open(f"{filename}.m3u8", "w", encoding="utf-8") as stream_io:
+        with open(
+            os.path.join(save_dir, f"{filename}.m3u8"), "w", encoding="utf-8"
+        ) as stream_io:
             stream_io.write(self.playlist_text)
         logging.info(f"{filename}.m3u8 written to disk")
 
-    def merge(self) -> None:
-        """Merge the chunks in a single file"""
+    def download(self) -> None:
+        """Download a twitter space"""
+        if not shutil.which("ffmpeg"):
+            raise FileNotFoundError("ffmpeg not installed")
+        metadata = self.metadata
+        os.makedirs("tmp", exist_ok=True)
+        self.write_playlist(save_dir="tmp")
         format_info = FormatInfo()
-        format_info.set_info(self.metadata)
-        filename = self.filename
-        tmp_fn = os.path.join("tmp", filename + "-list.txt")
-        with open(tmp_fn, "w", encoding="utf-8") as final_io:
-            for chunk in os.listdir("tmp"):
-                final_io.write(f"file '{chunk}'\n")
-        command = [
+        format_info.set_info(metadata)
+        state = metadata["data"]["audioSpace"]["metadata"]["state"]
+
+        cmd_base = [
             "ffmpeg",
             "-y",
+            "-stats",
             "-v",
-            "quiet",
-            "-f",
-            "concat",
-            "-safe",
-            "0",
+            "warning",
             "-i",
-            tmp_fn,
             "-c",
             "copy",
             "-metadata",
@@ -228,45 +233,56 @@ class TwspaceDL:
             f"author='{format_info['creator_name']}'",
             "-metadata",
             f"episode_id='{self.id}'",
-            f"./'{filename}'.m4a",
+            os.path.join("tmp", f"{self.filename}.m4a"),
         ]
-        subprocess.run(command, check=True)
-        logging.info("finished merging")
+        cmd_old = (
+            [cmd_base[0]]
+            + [
+                "-protocol_whitelist",
+                "file,https,tls,tcp",
+            ]
+            + cmd_base[1:6]
+            + [
+                os.path.join("tmp", self.filename + ".m3u8"),
+            ]
+            + cmd_base[6:]
+        )
 
-    def _download(self, url: str) -> None:
-        chunk = requests.get(url).content
-        chunk_name = url.split("/")[-1]
-        with open(f"tmp/{chunk_name}", "wb") as tmp_file:
-            tmp_file.write(chunk)
-        self.progress += 1
-        print(f"{self.progress*100/self.total_segments}%", end="\r")
+        if state == "Running":
+            cmd_new = (
+                cmd_base[:6]
+                + [self.dyn_url]
+                + cmd_base[6:-1]
+                + [os.path.join("tmp", f"{self.filename}_new.m4a")]
+            )
 
-    def download(self) -> None:
-        """Download a twitter space"""
-        segments = re.findall("https.*", self.playlist_text)
-        self.total_segments = len(segments)
-        logging.info("Total segments: %s", self.total_segments)
-        print()
+            cmd_final = (
+                cmd_base[:6]
+                + [
+                    (
+                        "concat:"
+                        + os.path.join("tmp", f"{self.filename}.m4a")
+                        + "|"
+                        + os.path.join("tmp", f"{self.filename}_new.m4a")
+                    )
+                ]
+                + cmd_base[6:-1]
+                + [f"{self.filename}.m4a"]
+            )
 
-        os.makedirs("tmp", exist_ok=True)
-        with ThreadPoolExecutor(max_workers=self.threads) as executor:
-            executor.map(self._download, segments, timeout=60)
+            with ProcessPoolExecutor(max_workers=self.threads) as executor:
+                executor.map(subprocess.run, (cmd_new, cmd_old), timeout=60)
+            subprocess.run(cmd_final, check=True)
+        else:
+            subprocess.run(cmd_old, check=True)
+            shutil.move(
+                os.path.join("tmp", self.filename + ".m4a"), self.filename + ".m4a"
+            )
+
         logging.info("Finished downloading")
-        self.merge()
-
-    def wait(self, time: int) -> None:
-        """Wait for a space end to download"""
-        logging.info(f"Checking for end each {time}s")
-        while (
-            state := self.metadata["data"]["audioSpace"]["metadata"]["state"]
-        ) != "Ended":
-            sleep(time)
-            if state == "Running":
-                self.master_url
-        self.download()
 
 
-if __name__ == "__main__":
+def get_args():
     parser = argparse.ArgumentParser(
         description="Script designed to help download twitter spaces"
     )
@@ -324,6 +340,11 @@ if __name__ == "__main__":
         parser.print_help(sys.stderr)
         sys.exit(1)
     args = parser.parse_args()
+    return args
+
+
+if __name__ == "__main__":
+    args = get_args()
     if not args.input_url and not args.from_master_url:
         print("Either space url or master url should be provided")
         sys.exit(1)
@@ -341,10 +362,7 @@ if __name__ == "__main__":
         twspace_dl.write_playlist()
     if not args.skip_download:
         try:
-            if args.wait:
-                twspace_dl.wait(args.wait)
-            else:
-                twspace_dl.download()
+            twspace_dl.download()
         except KeyboardInterrupt:
             logging.info("Download Interrupted")
         finally:
