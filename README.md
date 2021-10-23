@@ -10,22 +10,20 @@ A python script to download twitter space.
 
 ## Usage
 
-The script downloads from the beginning to the moment you started the script.
-
 ### Linux
 ```bash
-./twspace_dl.bin -i space_url --wait 15
+./twspace_dl.bin -i space_url
 ```
 
 ### Windows
 ```batch
-.\twspace_dl.exe -i space_url --wait 15
+.\twspace_dl.exe -i space_url
 ```
 
 ## Features
 Here's the output of the help option
 ```
-usage: main.py [-h] [-i SPACE_URL] [-o FORMAT_STR] [-w TIME] [-f URL] [-t THREADS] [-v] [-m] [-p] [-u] [-s] [-k]
+usage: main.py [-h] [-i SPACE_URL] [-o FORMAT_STR] [-f URL] [-t THREADS] [-v] [-m] [-p] [-u] [-s] [-k]
 
 Script designed to help download twitter spaces
 
@@ -33,7 +31,6 @@ optional arguments:
   -h, --help            show this help message and exit
   -i SPACE_URL, --input-url SPACE_URL
   -o FORMAT_STR, --output FORMAT_STR
-  -w TIME, --wait TIME  Wait for a space to end to download it
   -f URL, --from-master-url URL
                         use the master url for the processes(useful for ended spaces)
   -t THREADS, --threads THREADS
