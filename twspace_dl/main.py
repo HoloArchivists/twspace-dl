@@ -286,20 +286,9 @@ def get_args():
     parser = argparse.ArgumentParser(
         description="Script designed to help download twitter spaces"
     )
-    parser.add_argument("-i", "--input-url", type=str, metavar="SPACE_URL")
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=str,
-        metavar="FORMAT_STR",
-    )
-    parser.add_argument(
-        "-f",
-        "--from-master-url",
-        type=str,
-        metavar="URL",
-        help="use the master url for the processes(useful for ended spaces)",
-    )
+    input_group = parser.add_argument_group("input")
+    output_group = parser.add_argument_group("output")
+
     parser.add_argument(
         "-t",
         "--threads",
@@ -309,13 +298,39 @@ def get_args():
         default=os.cpu_count(),
     )
     parser.add_argument("-v", "--verbose", action="store_true")
-    parser.add_argument(
+    parser.add_argument("-s", "--skip-download", action="store_true")
+    parser.add_argument("-k", "--keep-files", action="store_true")
+
+    input_group.add_argument("-i", "--input-url", type=str, metavar="SPACE_URL")
+    input_group.add_argument(
+        "-d",
+        "--from-dynamic-url",
+        type=str,
+        metavar="DYN_URL",
+        help="use the master url for the processes(useful for ended spaces)",
+    )
+
+    input_group.add_argument(
+        "-f",
+        "--from-master-url",
+        type=str,
+        metavar="URL",
+        help="use the master url for the processes(useful for ended spaces)",
+    )
+
+    output_group.add_argument(
+        "-o",
+        "--output",
+        type=str,
+        metavar="FORMAT_STR",
+    )
+    output_group.add_argument(
         "-m",
         "--write-metadata",
         action="store_true",
         help="write the full metadata json to a file",
     )
-    parser.add_argument(
+    output_group.add_argument(
         "-p",
         "--write-playlist",
         action="store_true",
@@ -324,11 +339,10 @@ def get_args():
             "(e.g. if you want to use another downloader)"
         ),
     )
-    parser.add_argument(
+    output_group.add_argument(
         "-u", "--url", action="store_true", help="display the master url"
     )
-    parser.add_argument("-s", "--skip-download", action="store_true")
-    parser.add_argument("-k", "--keep-files", action="store_true")
+
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
@@ -345,6 +359,8 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
     twspace_dl = TwspaceDL(args.input_url, args.threads, args.output)
+    if args.from_dynamic_url:
+        twspace_dl.dyn_url = args.from_dynamic_url
     if args.from_master_url:
         twspace_dl.master_url = args.from_master_url
     if args.write_metadata:
