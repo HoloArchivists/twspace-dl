@@ -2,28 +2,24 @@
 
 A python script to download twitter space.
 
-## Downloads
+## Install
 
-[Linux](https://github.com/Ryu1845/twspace-dl/releases/latest/download/twspace_dl.bin)
-
-[Windows](https://github.com/Ryu1845/twspace-dl/releases/latest/download/twspace_dl.exe)
-
-## Usage
-
-### Linux
+### From source
 ```bash
-./twspace_dl.bin -i space_url
+git clone --depth 1 https://github.com/Ryu1845/twspace-dl
+cd twspace-dl
+pip install .
 ```
 
-### Windows
-```batch
-.\twspace_dl.exe -i space_url
+### From PyPI
+```bash
+pip install twspace-dl
 ```
 
 ## Features
 Here's the output of the help option
 ```
-usage: main.py [-h] [-t THREADS] [-v] [-s] [-k] [-i SPACE_URL] [-d DYN_URL] [-f URL] [-o FORMAT_STR] [-m] [-p] [-u]
+usage: twspace_dl [-h] [-t THREADS] [-v] [-s] [-k] [-i SPACE_URL] [-d DYN_URL] [-f URL] [-o FORMAT_STR] [-m] [-p] [-u]
 
 Script designed to help download twitter spaces
 
