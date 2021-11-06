@@ -1,9 +1,7 @@
 name: Publish Package
 
 on:
-  push:
-    tags:
-      - '*'
+  workflow_dispatch:
 
 jobs:
   publish:
@@ -21,8 +19,9 @@ jobs:
           pip install poetry
       - name: Build
         run: poetry build
-      - name: Publish (production)
+      - name: Publish (test)
         uses: pypa/gh-action-pypi-publish@master
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
