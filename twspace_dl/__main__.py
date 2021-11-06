@@ -350,7 +350,7 @@ def get_args():
     return args
 
 
-if __name__ == "__main__":
+def main():
     args = get_args()
     if not args.input_url and not args.from_master_url:
         print("Either space url or master url should be provided")
@@ -377,3 +377,7 @@ if __name__ == "__main__":
         finally:
             if not args.keep_files and os.path.exists("tmp"):
                 shutil.rmtree("tmp")
+
+
+if __name__ == "__main__":
+    main()
