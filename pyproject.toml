@@ -1,8 +1,10 @@
 [tool.poetry]
 name = "twspace-dl"
 version = "1.0.0"
-description = ""
+description = "Twitter Space archive helper script"
 authors = ["Ryu1845 <ryu@tpgjbo.xyz>"]
+readme = "README.md"
+license = ""
 
 [tool.poetry.dependencies]
 python = "^3.8"
