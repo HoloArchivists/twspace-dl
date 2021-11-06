@@ -16,6 +16,11 @@ pip install .
 pip install twspace-dl
 ```
 
+## Usage
+```bash
+twspace_dl -i space_url
+```
+
 ## Features
 Here's the output of the help option
 ```
