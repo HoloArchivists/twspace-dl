@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import shutil
+import shlex
 import subprocess
 import sys
 from collections import defaultdict
@@ -200,10 +201,8 @@ class TwspaceDL:
 
     def write_playlist(self, save_dir: str = "./") -> None:
         """Write the modified playlist for external use"""
-        filename = self.filename
-        with open(
-            os.path.join(save_dir, f"{filename}.m3u8"), "w", encoding="utf-8"
-        ) as stream_io:
+        filename = os.path.join(save_dir, shlex.quote(self.filename) + ".m3u8")
+        with open(filename, "w", encoding="utf-8") as stream_io:
             stream_io.write(self.playlist_text)
         logging.info(f"{filename}.m3u8 written to disk")
 
@@ -228,50 +227,50 @@ class TwspaceDL:
             "-c",
             "copy",
             "-metadata",
-            f"title='{format_info['title']}'",
+            f"title={format_info['title']}",
             "-metadata",
-            f"author='{format_info['creator_name']}'",
+            f"author={format_info['creator_name']}",
             "-metadata",
-            f"episode_id='{self.id}'",
-            os.path.join("tmp", f"{self.filename}.m4a"),
+            f"episode_id={self.id}",
         ]
-        cmd_old = (
-            [cmd_base[0]]
-            + [
-                "-protocol_whitelist",
-                "file,https,tls,tcp",
-            ]
-            + cmd_base[1:6]
-            + [
-                os.path.join("tmp", self.filename + ".m3u8"),
-            ]
-            + cmd_base[6:]
-        )
+        cmd_base = [shlex.quote(element) for element in cmd_base]
+
+        filename_m3u8 = os.path.join("tmp", shlex.quote(self.filename) + ".m3u8")
+        filename_old = os.path.join("tmp", (self.filename) + ".m4a")
+        cmd_old = cmd_base.copy()
+        cmd_old.insert(1, "-protocol_whitelist")
+        cmd_old.insert(2, "file,https,tls,tcp")
+        cmd_old.insert(8, filename_m3u8)
+        cmd_old.append(filename_old)
 
         if state == "Running":
-            cmd_new = (
-                cmd_base[:6]
-                + [self.dyn_url]
-                + cmd_base[6:-1]
-                + [os.path.join("tmp", f"{self.filename}_new.m4a")]
-            )
+            filename_new = os.path.join("tmp", (self.filename) + "_new.m4a")
+            cmd_new = cmd_base.copy()
+            cmd_new.insert(6, (self.dyn_url))
+            cmd_new.append(filename_new)
 
-            cmd_final = (
-                cmd_base[:6]
-                + [
-                    (
-                        "concat:"
-                        + os.path.join("tmp", f"{self.filename}.m4a")
-                        + "|"
-                        + os.path.join("tmp", f"{self.filename}_new.m4a")
-                    )
-                ]
-                + cmd_base[6:-1]
-                + [f"{self.filename}.m4a"]
-            )
+            concat_fn = os.path.join("tmp", "list.txt")
+            with open(concat_fn, "w", encoding="utf-8") as list_io:
+                list_io.write(
+                    "file "
+                    + f"'{os.path.join(os.getcwd(), filename_old)}'"
+                    + "\n"
+                    + "file "
+                    + f"'{os.path.join(os.getcwd(), filename_new)}'"
+                )
 
-            with ThreadPoolExecutor(max_workers=self.threads) as executor:
-                executor.map(subprocess.run, (cmd_new, cmd_old), timeout=60)
+            cmd_final = cmd_base.copy()
+            cmd_final.insert(1, "-f")
+            cmd_final.insert(2, "concat")
+            cmd_final.insert(3, "-safe")
+            cmd_final.insert(4, "0")
+            cmd_final.insert(10, concat_fn)
+            cmd_final.append(shlex.quote(self.filename) + ".m4a")
+
+            # with ThreadPoolExecutor(max_workers=self.threads) as executor:
+            # executor.map(subprocess.run, (cmd_new, cmd_old), timeout=60)
+            subprocess.run(cmd_new, check=True)
+            subprocess.run(cmd_old, check=True)
             subprocess.run(cmd_final, check=True)
         else:
             subprocess.run(cmd_old, check=True)
