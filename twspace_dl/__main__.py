@@ -9,13 +9,13 @@ import shlex
 import subprocess
 import sys
 from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor
+
+# from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from functools import cached_property
 from urllib.parse import urlparse
 
 import requests
-
 
 # mostly taken from ytarchive
 class FormatInfo(dict):
@@ -66,21 +66,87 @@ class FormatInfo(dict):
 class TwspaceDL:
     """Downloader class for twitter spaces"""
 
-    def __init__(self, url: str, threads: int, format_str: str):
-        if not url:
-            logging.warning("No space url given, file won't have any metadata")
-            self.id = "no_id"
-            self.format_str = "no_info"
-        else:
-            space_id = re.findall(r"(?<=spaces/)\w*", url)[0]
-            self.id = space_id
-            self.format_str = format_str or FormatInfo.DEFAULT_FNAME_FORMAT
+    def __init__(self, space_id: str, threads: int, format_str: str):
+        self.id = space_id
         self.threads = threads
         self.progress = 0
         self.total_segments: int
+        self.format_str = format_str
 
-    @cached_property
-    def _guest_token(self) -> str:
+    @classmethod
+    def from_space_url(cls, url: str, threads: int, format_str: str):
+        if not url:
+            logging.warning("No space url given, file won't have any metadata")
+            space_id = "no_id"
+            format_str = "no_info"
+        else:
+            space_id = re.findall(r"(?<=spaces/)\w*", url)[0]
+            format_str = format_str or FormatInfo.DEFAULT_FNAME_FORMAT
+        return cls(space_id, threads, format_str)
+
+    @classmethod
+    def from_user_url(cls, url: str, threads, format_str):
+        screen_name = re.findall(r"(?<=twitter.com/)\w*", url)[0]
+        params = {
+            "variables": (
+                "{"
+                f'"screen_name":"{screen_name}",'
+                '"withSafetyModeUserFields":true,'
+                '"withSuperFollowsUserFields":true,'
+                '"withNftAvatar":false'
+                "}"
+            )
+        }
+        headers = {
+            "authorization": (
+                "Bearer "
+                "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
+                "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
+            ),
+            "x-guest-token": TwspaceDL.guest_token(),
+        }
+        response = requests.get(
+            "https://twitter.com/i/api/graphql/1CL-tn62bpc-zqeQrWm4Kw/UserByScreenName",
+            headers=headers,
+            params=params,
+        )
+        user_data = response.json()
+        user_id = user_data["data"]["user"]["result"]["rest_id"]
+
+        params = {
+            "variables": (
+                "{"
+                f'"userId":"{user_id}",'
+                '"count":20,'
+                '"withTweetQuoteCount":true,'
+                '"includePromotedContent":true,'
+                '"withQuickPromoteEligibilityTweetFields":false,'
+                '"withSuperFollowsUserFields":true,'
+                '"withUserResults":true,'
+                '"withNftAvatar":false,'
+                '"withBirdwatchPivots":false,'
+                '"withReactionsMetadata":false,'
+                '"withReactionsPerspective":false,'
+                '"withSuperFollowsTweetFields":true,'
+                '"withVoice":true}'
+            )
+        }
+        response = requests.get(
+            "https://twitter.com/i/api/graphql/jpCmlX6UgnPEZJknGKbmZA/UserTweets",
+            params=params,
+            headers=headers,
+        )
+        tweets = response.text
+
+        try:
+            space_id = re.findall(r"(?<=https://twitter.com/i/spaces/)\w*", tweets)[0]
+        except (IndexError, json.JSONDecodeError) as err:
+            raise RuntimeError("User is not live", response.text) from err
+        format_str = format_str or FormatInfo.DEFAULT_FNAME_FORMAT
+        return cls(space_id, threads, format_str)
+
+    @staticmethod
+    def guest_token() -> str:
         response = requests.get("https://twitter.com/").text
         last_line = response.splitlines()[-1]
         guest_token = re.findall(r"(?<=gt\=)\d{19}", last_line)[0]
@@ -112,7 +178,7 @@ class TwspaceDL:
                 "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
                 "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
             ),
-            "x-guest-token": self._guest_token,
+            "x-guest-token": self.guest_token(),
         }
         response = requests.get(
             "https://twitter.com/i/api/graphql/jyQ0_DEMZHeoluCgHJ-U5Q/AudioSpaceById",
@@ -301,6 +367,7 @@ def get_args():
     parser.add_argument("-k", "--keep-files", action="store_true")
 
     input_group.add_argument("-i", "--input-url", type=str, metavar="SPACE_URL")
+    input_group.add_argument("-U", "--user-url", type=str, metavar="USER_URL")
     input_group.add_argument(
         "-d",
         "--from-dynamic-url",
@@ -351,13 +418,16 @@ def get_args():
 
 def main():
     args = get_args()
-    if not args.input_url and not args.from_master_url:
-        print("Either space url or master url should be provided")
+    if not args.input_url and not args.user_url and not args.from_master_url:
+        print("Either space url, user url or master url should be provided")
         sys.exit(1)
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
-    twspace_dl = TwspaceDL(args.input_url, args.threads, args.output)
+    if args.input_url:
+        twspace_dl = TwspaceDL.from_space_url(args.input_url, args.threads, args.output)
+    else:
+        twspace_dl = TwspaceDL.from_user_url(args.user_url, args.threads, args.output)
     if args.from_dynamic_url:
         twspace_dl.dyn_url = args.from_dynamic_url
     if args.from_master_url:
