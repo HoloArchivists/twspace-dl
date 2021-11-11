@@ -24,7 +24,8 @@ twspace_dl -i space_url
 ## Features
 Here's the output of the help option
 ```
-usage: twspace_dl [-h] [-t THREADS] [-v] [-s] [-k] [-i SPACE_URL] [-d DYN_URL] [-f URL] [-o FORMAT_STR] [-m] [-p] [-u]
+usage: twspace_dl [-h] [-t THREADS] [-v] [-s] [-k] [-i SPACE_URL] [-U USER_URL] [-d DYN_URL] [-f URL]
+                  [-o FORMAT_STR] [-m] [-p] [-u]
 
 Script designed to help download twitter spaces
 
@@ -38,6 +39,7 @@ optional arguments:
 
 input:
   -i SPACE_URL, --input-url SPACE_URL
+  -U USER_URL, --user-url USER_URL
   -d DYN_URL, --from-dynamic-url DYN_URL
                         use the master url for the processes(useful for ended spaces)
   -f URL, --from-master-url URL
