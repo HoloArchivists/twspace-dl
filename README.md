@@ -1,5 +1,7 @@
 # Twspace-dl
 
+[![PyPI](https://img.shields.io/pypi/v/twspace-dl?color=blue)](https://pypi.org/project/twspace-dl/)
+
 A python script to download twitter space.
 
 ## Install
