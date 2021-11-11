@@ -4,6 +4,10 @@
 
 A python script to download twitter space.
 
+## Requirements
+
+ffmpeg
+
 ## Install
 
 ### From source
