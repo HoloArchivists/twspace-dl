@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "twspace-dl"
-version = "1.0.0"
+version = "2021.11.11.0"
 description = "Twitter Space archive helper script"
 authors = ["Ryu1845 <ryu@tpgjbo.xyz>"]
 readme = "README.md"
@@ -32,6 +32,6 @@ push = true
 
 [tool.bumpver.file_patterns]
 "pyproject.toml" = [
-    'current_version = "{version}"',
+    'version = "{version}"',
+    # 'current_version = "{version}"',
 ]
-
