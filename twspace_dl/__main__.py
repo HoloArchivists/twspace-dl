@@ -141,7 +141,7 @@ class TwspaceDL:
         try:
             space_id = re.findall(r"(?<=https://twitter.com/i/spaces/)\w*", tweets)[0]
         except (IndexError, json.JSONDecodeError) as err:
-            raise RuntimeError("User is not live", response.text) from err
+            raise RuntimeError("User is not live") from err
         format_str = format_str or FormatInfo.DEFAULT_FNAME_FORMAT
         return cls(space_id, threads, format_str)
 
@@ -270,7 +270,7 @@ class TwspaceDL:
         filename = os.path.join(save_dir, shlex.quote(self.filename) + ".m3u8")
         with open(filename, "w", encoding="utf-8") as stream_io:
             stream_io.write(self.playlist_text)
-        logging.info(f"{filename}.m3u8 written to disk")
+        logging.info(f"{filename} written to disk")
 
     def download(self) -> None:
         """Download a twitter space"""
