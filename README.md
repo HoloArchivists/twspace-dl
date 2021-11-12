@@ -1,8 +1,18 @@
-# Twspace-dl
-
-[![PyPI](https://img.shields.io/pypi/v/twspace-dl?color=blue)](https://pypi.org/project/twspace-dl/)
-
-A python script to download twitter space.
+<div align="center">
+  <h1 id="twspace-dl">Twspace-dl</h1>
+  <p>
+    <a href="https://pypi.org/project/twspace-dl/">
+      <img src="https://img.shields.io/pypi/v/twspace-dl?style=for-the-badge" alt="PyPI">
+    </a>
+    <a href="https://pypi.org/project/twspace-dl/">
+      <img src="https://img.shields.io/pypi/dm/twspace-dl?label=DOWNLOADS%20%28PYPI%29&amp;style=for-the-badge" alt="PyPI DLs">
+    </a>
+    <a href="https://github.com/Ryu1845/twspace-dl/releases">
+      <img src="https://img.shields.io/github/downloads/Ryu1845/twspace-dl/total?label=DOWNLOADS%20%28GITHUB%29&amp;style=for-the-badge" alt="Github Releases DLs">
+    </a>
+  </p>
+  <p>A python script to download twitter spaces.</p>
+</div>
 
 ## Requirements
 
@@ -73,6 +83,7 @@ Example: `[%(creator_screen_name)s]-%(title)s|%(start_date)s`
 ## Service
 There's an example service file [there](../blob/master/twspace-dl@.service)
 You'll have to modify different stuff depending on how you installed or not the script.
+
 I'd be very grateful if someone made a PR with a bash script automating those ;)
 
 ### Cloned Repository
