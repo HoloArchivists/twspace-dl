@@ -81,7 +81,7 @@ You can use the following identifiers for the formatting
 Example: `[%(creator_screen_name)s]-%(title)s|%(start_date)s`
 
 ## Service
-There's an example service file [there](../blob/main/twspace-dl@.service)
+There's an example service file [there](https://github.com/Ryu1845/twspace-dl/blob/main/twspace-dl@.service)
 You'll have to modify different stuff depending on how you installed or not the script.
 
 I'd be very grateful if someone made a PR with a bash script automating those ;)
