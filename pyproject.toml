@@ -1,10 +1,16 @@
 [tool.poetry]
 name = "twspace-dl"
 version = "2021.11.13.0"
-description = "Twitter Space archive helper script"
+description = "The only tool to record Twitter spaces (yet)"
 authors = ["Ryu1845 <ryu@tpgjbo.xyz>"]
 readme = "README.md"
-license = ""
+license = "GPL-2.0-only"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Topic :: Multimedia :: Sound/Audio :: Capture/Recording"
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"
