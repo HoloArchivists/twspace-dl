@@ -20,6 +20,17 @@ ffmpeg
 
 ## Install
 
+### From portable binaries
+
+[Linux](https://github.com/Ryu1845/twspace-dl/releases/latest/download/twspace_dl.bin)
+
+[Windows](https://github.com/Ryu1845/twspace-dl/releases/latest/download/twspace_dl.exe)
+
+### From PyPI
+```bash
+pip install twspace-dl
+```
+
 ### From source
 ```bash
 git clone --depth 1 https://github.com/Ryu1845/twspace-dl
@@ -27,15 +38,19 @@ cd twspace-dl
 pip install .
 ```
 
-### From PyPI
-```bash
-pip install twspace-dl
-```
-
 ## Usage
 ```bash
 twspace_dl -i space_url
 ```
+<details>
+  <summary>With binaries</summary>
+  <h3 id="windows">Windows</h3>
+  <pre><code class="lang-bash">.\twspace_dl<span class="hljs-selector-class">.exe</span> -<span class="hljs-selector-tag">i</span> space_url
+  </code></pre>
+  <h3 id="linux">Linux</h3>
+  <pre><code class="lang-bash">.\twspace_dl<span class="hljs-selector-class">.bin</span> -<span class="hljs-selector-tag">i</span> space_url
+  </code></pre>
+</details>
 
 ## Features
 Here's the output of the help option
