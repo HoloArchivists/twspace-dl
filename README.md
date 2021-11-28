@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD033 MD041 -->
+
 <div align="center">
   <h1 id="twspace-dl">Twspace-dl</h1>
   <p>
@@ -27,11 +29,13 @@ ffmpeg
 [Windows](https://github.com/Ryu1845/twspace-dl/releases/latest/download/twspace_dl.exe)
 
 ### From PyPI
+
 ```bash
 pip install twspace-dl
 ```
 
 ### From source
+
 ```bash
 git clone --depth 1 https://github.com/Ryu1845/twspace-dl
 cd twspace-dl
@@ -39,22 +43,33 @@ pip install .
 ```
 
 ## Usage
+
 ```bash
 twspace_dl -i space_url
 ```
+
 <details>
-  <summary>With binaries</summary>
-  <h3 id="windows">Windows</h3>
-  <pre><code class="lang-bash">.\twspace_dl<span class="hljs-selector-class">.exe</span> -<span class="hljs-selector-tag">i</span> space_url
-  </code></pre>
-  <h3 id="linux">Linux</h3>
-  <pre><code class="lang-bash">.\twspace_dl<span class="hljs-selector-class">.bin</span> -<span class="hljs-selector-tag">i</span> space_url
-  </code></pre>
+<summary>With binaries</summary>
+
+### Windows
+
+```bash
+.\twspace_dl.exe -i space_url
+```
+
+### Linux
+
+```bash
+./twspace_dl.bin -i space_url
+```
+
 </details>
 
 ## Features
+
 Here's the output of the help option
-```
+
+```txt
 usage: twspace_dl [-h] [-t THREADS] [-v] [-s] [-k] [-i SPACE_URL] [-U USER_URL] [-d DYN_URL] [-f URL]
                   [-o FORMAT_STR] [-m] [-p] [-u]
 
@@ -84,8 +99,10 @@ output:
 ```
 
 ## Format
+
 You can use the following identifiers for the formatting
-```
+
+```python
 %(title)s
 %(id)s
 %(start_date)s
@@ -93,26 +110,30 @@ You can use the following identifiers for the formatting
 %(creator_screen_name)s
 %(url)s
 ```
+
 Example: `[%(creator_screen_name)s]-%(title)s|%(start_date)s`
 
 ## Service
+
 There's an example service file [there](https://github.com/Ryu1845/twspace-dl/blob/main/twspace-dl@.service)
 You'll have to modify different stuff depending on how you installed or not the script.
 
 I'd be very grateful if someone made a PR with a bash script automating those ;)
 
 ### Cloned Repository
+
 In that case, you'll have to modify the `WorkingDirectory` to where you cloned the repo.
 
 ### Pip
+
 1. Change `WorkingDirectory` to where you want the spaces to be downloaded.
 2. Find where your executable is by running `which twspace_dl` in your terminal.
 3. Change the `/usr/bin/python twspace_dl` part to the path of your executable.
 
-
 Now to install the service, you can either install it as a user service(recommended if on your personal desktop), or as a normal service.
 
 ### User
+
 1. Copy the file you modified earlier to `~/.config/systemd/user`(create the systemd directory if it doesn't exist).
 2. run
 
@@ -120,6 +141,7 @@ Now to install the service, you can either install it as a user service(recommen
 systemctl --user daemon-reload
 systemctl --user start twspace-dl@USER_ID.service
 ```
+
 `USER_ID` is the part after `https://twitter.com/` in the url of a twitter profile (i.e `https://twitter.com/USER_ID`)
 
 To keep it working after restarts run:
@@ -129,6 +151,7 @@ systemctl --user enable twspace-dl@USER_ID.service
 ```
 
 ### System
+
 1. Copy the file you modified earlier to `/etc/systemd/system`.
 2. run
 
@@ -136,6 +159,7 @@ systemctl --user enable twspace-dl@USER_ID.service
 sudo systemctl daemon-reload
 sudo systemctl start twspace-dl@USER_ID.service
 ```
+
 `USER_ID` is the part after `https://twitter.com/` in the url of a twitter profile (i.e `https://twitter.com/USER_ID`)
 
 To keep it working after restarts run:
