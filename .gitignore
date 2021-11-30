@@ -4,3 +4,4 @@
 *.json
 tmp
 __pycache__
+.python-version

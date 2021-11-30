@@ -5,6 +5,7 @@ import re
 import shlex
 import shutil
 import subprocess
+
 # from concurrent.futures import ThreadPoolExecutor
 from functools import cached_property
 from urllib.parse import urlparse
@@ -194,8 +195,8 @@ class TwspaceDL:
     @cached_property
     def master_url(self) -> str:
         """Master URL for a space"""
-        master_url = self.dyn_url.removesuffix("?type=live").replace(
-            "dynamic", "master"
+        master_url = self.dyn_url.replace(
+            "dynamic_playlist.m3u8?type=live", "master_playlist.m3u8"
         )
         return master_url
 
