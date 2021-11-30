@@ -213,7 +213,7 @@ class TwspaceDL:
     def playlist_text(self) -> str:
         """Modify the chunks URL using the master one to be able to download"""
         playlist_text = requests.get(self.playlist_url).text
-        master_url_wo_file = self.master_url.removesuffix("master_playlist.m3u8")
+        master_url_wo_file = self.master_url.replace("/master_playlist.m3u8", "/")
         playlist_text = re.sub(r"(?=chunk)", master_url_wo_file, playlist_text)
         return playlist_text
 
