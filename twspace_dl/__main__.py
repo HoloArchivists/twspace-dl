@@ -105,8 +105,8 @@ def main() -> None:
         except KeyboardInterrupt:
             logging.info("Download Interrupted")
         finally:
-            if not args.keep_files and os.path.exists("tmp"):
-                shutil.rmtree("tmp")
+            if not args.keep_files and os.path.exists(twspace_dl._tmpdir):
+                shutil.rmtree(twspace_dl._tmpdir)
 
 
 if __name__ == "__main__":
