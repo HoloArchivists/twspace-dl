@@ -19,9 +19,7 @@ class TwspaceDL:
 
     def __init__(self, space_id: str, format_str: str) -> None:
         self.id = space_id
-        self.progress = 0
-        self.total_segments: int
-        self.format_str = format_str
+        self.format_str = format_str or FormatInfo.DEFAULT_FNAME_FORMAT
         self._tmpdir: str
 
     @classmethod
@@ -32,7 +30,6 @@ class TwspaceDL:
             format_str = "no_info"
         else:
             space_id = re.findall(r"(?<=spaces/)\w*", url)[0]
-            format_str = format_str or FormatInfo.DEFAULT_FNAME_FORMAT
         return cls(space_id, format_str)
 
     @classmethod
@@ -93,7 +90,6 @@ class TwspaceDL:
             space_id = re.findall(r"(?<=https://twitter.com/i/spaces/)\w*", tweets)[0]
         except (IndexError, json.JSONDecodeError) as err:
             raise RuntimeError("User is not live") from err
-        format_str = format_str or FormatInfo.DEFAULT_FNAME_FORMAT
         return cls(space_id, format_str)
 
     @staticmethod
@@ -109,7 +105,7 @@ class TwspaceDL:
         logging.debug(guest_token)
         return guest_token
 
-    @property
+    @cached_property
     def metadata(self) -> dict:
         """Get space metadata"""
         params = {
@@ -156,14 +152,6 @@ class TwspaceDL:
         format_info.set_info(self.metadata)
         filename = format_info.format(self.format_str)
         return filename
-
-    def write_metadata(self) -> None:
-        """Write the metadata to a file"""
-        metadata = json.dumps(self.metadata, indent=4)
-        filename = self.filename
-        with open(f"{filename}.json", "w", encoding="utf-8") as metadata_io:
-            metadata_io.write(metadata)
-            logging.info(f"{filename}.json written to disk")
 
     @cached_property
     def dyn_url(self) -> str:

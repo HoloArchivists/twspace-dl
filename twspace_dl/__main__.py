@@ -1,5 +1,6 @@
 """Script designed to help download twitter spaces"""
 import argparse
+import json
 import logging
 import os
 import shutil
@@ -29,6 +30,16 @@ def get_args() -> argparse.Namespace:
 
     input_group.add_argument("-i", "--input-url", type=str, metavar="SPACE_URL")
     input_group.add_argument("-U", "--user-url", type=str, metavar="USER_URL")
+    input_group.add_argument(
+        "-M",
+        "--input-metadata",
+        type=str,
+        metavar="PATH",
+        help=(
+            "use a metadata json file instead of input url\n"
+            "(useful for very old ended spaces)"
+        ),
+    )
     input_group.add_argument(
         "-d",
         "--from-dynamic-url",
@@ -79,7 +90,12 @@ def get_args() -> argparse.Namespace:
 
 def main() -> None:
     args = get_args()
-    if not args.input_url and not args.user_url and not args.from_master_url:
+    if (
+        not args.input_url
+        and not args.input_metadata
+        and not args.user_url
+        and not args.from_master_url
+    ):
         print("Either space url, user url or master url should be provided")
         sys.exit(1)
 
@@ -90,14 +106,23 @@ def main() -> None:
     elif args.user_url:
         twspace_dl = TwspaceDL.from_user_url(args.user_url, args.output)
     else:
-        twspace_dl = TwspaceDL.from_user_url(args.user_url, args.threads, args.output)
+        with open(args.input_metadata, "r", encoding="utf-8") as metadata_io:
+            metadata = json.load(metadata_io)
+        twspace_dl = TwspaceDL(
+            metadata["data"]["audioSpace"]["metadata"]["rest_id"], args.output
+        )
+        twspace_dl.metadata = metadata
+
     if args.from_dynamic_url:
         twspace_dl.dyn_url = args.from_dynamic_url
     if args.from_master_url:
         twspace_dl.master_url = args.from_master_url
 
     if args.write_metadata:
-        twspace_dl.write_metadata()
+        metadata = json.dumps(twspace_dl.metadata, indent=4)
+        filename = twspace_dl.filename
+        with open(f"{filename}.json", "w", encoding="utf-8") as metadata_io:
+            metadata_io.write(metadata)
     if args.url:
         print(twspace_dl.master_url)
     if args.write_playlist:
