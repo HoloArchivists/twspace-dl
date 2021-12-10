@@ -70,7 +70,7 @@ twspace_dl -i space_url
 Here's the output of the help option
 
 ```txt
-usage: twspace_dl [-h] [-t THREADS] [-v] [-s] [-k] [-i SPACE_URL] [-U USER_URL] [-d DYN_URL] [-f URL]
+usage: twspace_dl [-h] [-t THREADS] [-v] [-s] [-k] [-i SPACE_URL] [-U USER_URL] [-M PATH] [-d DYN_URL] [-f URL]
                   [-o FORMAT_STR] [-m] [-p] [-u]
 
 Script designed to help download twitter spaces
@@ -86,10 +86,20 @@ optional arguments:
 input:
   -i SPACE_URL, --input-url SPACE_URL
   -U USER_URL, --user-url USER_URL
+  -M PATH, --input-metadata PATH
+                        use a metadata json file instead of input url (useful for very old ended spaces)
   -d DYN_URL, --from-dynamic-url DYN_URL
-                        use the master url for the processes(useful for ended spaces)
+                        use the dynamic url for the processes(useful for ended spaces) example: https://prod-
+                        fastly-ap-
+                        northeast-1.video.pscp.tv/Transcoding/v1/hls/zUUpEgiM0M18jCGxo2eSZs99p49hfyFQr1l4cdze-
+                        Sp4T-DQOMMoZpkbdyetgfwscfvvUkAdeF-I5hPI4bGoYg/non_transcode/ap-northeast-1/periscope-
+                        replay-direct-prod-ap-northeast-1-public/audio-space/dynamic_playlist.m3u8?type=live
   -f URL, --from-master-url URL
-                        use the master url for the processes(useful for ended spaces)
+                        use the master url for the processes(useful for ended spaces) example: https://prod-
+                        fastly-ap-northeast-1.video.pscp.tv/Transcoding/v1/hls/YRSsw6_P5xUZHMualK5-ihvePR6o4QmoZV
+                        OBGicKvmkL_KB9IQYtxVqm3P_vpZ2HnFkoRfar4_uJOjqC8OCo5A/non_transcode/ap-
+                        northeast-1/periscope-replay-direct-prod-ap-northeast-1-public/audio-
+                        space/master_playlist.m3u8
 
 output:
   -o FORMAT_STR, --output FORMAT_STR

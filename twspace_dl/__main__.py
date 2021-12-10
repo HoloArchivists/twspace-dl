@@ -6,7 +6,7 @@ import os
 import shutil
 import sys
 
-from .TwspaceDL import TwspaceDL
+from twspace_dl.TwspaceDL import TwspaceDL
 
 
 def get_args() -> argparse.Namespace:
@@ -45,7 +45,13 @@ def get_args() -> argparse.Namespace:
         "--from-dynamic-url",
         type=str,
         metavar="DYN_URL",
-        help="use the master url for the processes(useful for ended spaces)",
+        help=(
+            "use the dynamic url for the processes(useful for ended spaces)\n"
+            "example: https://prod-fastly-ap-northeast-1.video.pscp.tv/Transcoding/v1/hls/"
+            "zUUpEgiM0M18jCGxo2eSZs99p49hfyFQr1l4cdze-Sp4T-DQOMMoZpkbdyetgfwscfvvUkAdeF-I5hPI4bGoYg/"
+            "non_transcode/ap-northeast-1/periscope-replay-direct-prod-ap-northeast-1-public/"
+            "audio-space/dynamic_playlist.m3u8?type=live"
+        ),
     )
 
     input_group.add_argument(
@@ -53,7 +59,13 @@ def get_args() -> argparse.Namespace:
         "--from-master-url",
         type=str,
         metavar="URL",
-        help="use the master url for the processes(useful for ended spaces)",
+        help=(
+            "use the master url for the processes(useful for ended spaces)\n"
+            "example: https://prod-fastly-ap-northeast-1.video.pscp.tv/Transcoding/v1/hls/"
+            "YRSsw6_P5xUZHMualK5-ihvePR6o4QmoZVOBGicKvmkL_KB9IQYtxVqm3P_vpZ2HnFkoRfar4_uJOjqC8OCo5A/"
+            "non_transcode/ap-northeast-1/periscope-replay-direct-prod-ap-northeast-1-public/"
+            "audio-space/master_playlist.m3u8"
+        ),
     )
 
     output_group.add_argument(
