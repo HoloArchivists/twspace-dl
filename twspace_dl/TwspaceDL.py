@@ -2,9 +2,9 @@ import json
 import logging
 import os
 import re
-import shlex
 import shutil
 import subprocess
+import tempfile
 
 # from concurrent.futures import ThreadPoolExecutor
 from functools import cached_property
@@ -24,6 +24,7 @@ class TwspaceDL:
         self.progress = 0
         self.total_segments: int
         self.format_str = format_str
+        self._tmpdir: str
 
     @classmethod
     def from_space_url(cls, url: str, threads: int, format_str: str):
@@ -100,8 +101,13 @@ class TwspaceDL:
     @staticmethod
     def guest_token() -> str:
         response = requests.get("https://twitter.com/").text
-        last_line = response.splitlines()[-1]
-        guest_token = re.findall(r"(?<=gt\=)\d{19}", last_line)[0]
+        guest_token = ""
+        for _ in range(5):
+            guest_token_list = re.findall(r"(?<=gt\=)\d{19}", response)
+            if len(guest_token_list) != 0:
+                guest_token = guest_token_list[0]
+        if not guest_token:
+            raise RuntimeError("No guest token found after five retry")
         logging.debug(guest_token)
         return guest_token
 
@@ -219,7 +225,7 @@ class TwspaceDL:
 
     def write_playlist(self, save_dir: str = "./") -> None:
         """Write the modified playlist for external use"""
-        filename = shlex.quote(os.path.basename(self.filename)) + ".m3u8"
+        filename = re.escape(os.path.basename(self.filename)) + ".m3u8"
         path = os.path.join(save_dir, filename)
         with open(path, "w", encoding="utf-8") as stream_io:
             stream_io.write(self.playlist_text)
@@ -230,8 +236,8 @@ class TwspaceDL:
         if not shutil.which("ffmpeg"):
             raise FileNotFoundError("ffmpeg not installed")
         metadata = self.metadata
-        os.makedirs("tmp", exist_ok=True)
-        self.write_playlist(save_dir="tmp")
+        tempdir = self._tmpdir = tempfile.mkdtemp(dir=".")
+        self.write_playlist(save_dir=tempdir)
         format_info = FormatInfo()
         format_info.set_info(metadata)
         state = metadata["data"]["audioSpace"]["metadata"]["state"]
@@ -252,11 +258,10 @@ class TwspaceDL:
             "-metadata",
             f"episode_id={self.id}",
         ]
-        cmd_base = [shlex.quote(element) for element in cmd_base]
 
-        filename = shlex.quote(os.path.basename(self.filename))
-        filename_m3u8 = os.path.join("tmp", filename + ".m3u8")
-        filename_old = os.path.join("tmp", filename + ".m4a")
+        filename = re.escape(os.path.basename(self.filename))
+        filename_m3u8 = os.path.join(tempdir, filename + ".m3u8")
+        filename_old = os.path.join(tempdir, filename + ".m4a")
         cmd_old = cmd_base.copy()
         cmd_old.insert(1, "-protocol_whitelist")
         cmd_old.insert(2, "file,https,tls,tcp")
@@ -264,12 +269,12 @@ class TwspaceDL:
         cmd_old.append(filename_old)
 
         if state == "Running":
-            filename_new = os.path.join("tmp", filename + "_new.m4a")
+            filename_new = os.path.join(tempdir, filename + "_new.m4a")
             cmd_new = cmd_base.copy()
             cmd_new.insert(6, (self.dyn_url))
             cmd_new.append(filename_new)
 
-            concat_fn = os.path.join("tmp", "list.txt")
+            concat_fn = os.path.join(tempdir, "list.txt")
             with open(concat_fn, "w", encoding="utf-8") as list_io:
                 list_io.write(
                     "file "
@@ -285,15 +290,21 @@ class TwspaceDL:
             cmd_final.insert(3, "-safe")
             cmd_final.insert(4, "0")
             cmd_final.insert(10, concat_fn)
-            cmd_final.append(shlex.quote(self.filename) + ".m4a")
+            cmd_final.append(re.escape(self.filename) + ".m4a")
 
             # with ThreadPoolExecutor(max_workers=self.threads) as executor:
             # executor.map(subprocess.run, (cmd_new, cmd_old), timeout=60)
-            subprocess.run(cmd_new, check=True)
-            subprocess.run(cmd_old, check=True)
-            subprocess.run(cmd_final, check=True)
+            try:
+                subprocess.run(cmd_new, check=True)
+                subprocess.run(cmd_old, check=True)
+                subprocess.run(cmd_final, check=True)
+            except subprocess.CalledProcessError as err:
+                raise RuntimeError(" ".join(err.cmd)) from err
         else:
-            subprocess.run(cmd_old, check=True)
+            try:
+                subprocess.run(cmd_old, check=True)
+            except subprocess.CalledProcessError as err:
+                raise RuntimeError(" ".join(err.cmd)) from err
             shutil.move(filename_old, self.filename + ".m4a")
 
         logging.info("Finished downloading")
