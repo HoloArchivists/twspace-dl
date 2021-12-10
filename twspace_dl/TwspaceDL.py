@@ -6,7 +6,6 @@ import shutil
 import subprocess
 import tempfile
 
-# from concurrent.futures import ThreadPoolExecutor
 from functools import cached_property
 from urllib.parse import urlparse
 
@@ -18,16 +17,15 @@ from .FormatInfo import FormatInfo
 class TwspaceDL:
     """Downloader class for twitter spaces"""
 
-    def __init__(self, space_id: str, threads: int, format_str: str) -> None:
+    def __init__(self, space_id: str, format_str: str) -> None:
         self.id = space_id
-        self.threads = threads
         self.progress = 0
         self.total_segments: int
         self.format_str = format_str
         self._tmpdir: str
 
     @classmethod
-    def from_space_url(cls, url: str, threads: int, format_str: str):
+    def from_space_url(cls, url: str, format_str: str):
         if not url:
             logging.warning("No space url given, file won't have any metadata")
             space_id = "no_id"
@@ -35,10 +33,10 @@ class TwspaceDL:
         else:
             space_id = re.findall(r"(?<=spaces/)\w*", url)[0]
             format_str = format_str or FormatInfo.DEFAULT_FNAME_FORMAT
-        return cls(space_id, threads, format_str)
+        return cls(space_id, format_str)
 
     @classmethod
-    def from_user_url(cls, url: str, threads, format_str):
+    def from_user_url(cls, url: str, format_str: str):
         screen_name = re.findall(r"(?<=twitter.com/)\w*", url)[0]
         params = {
             "variables": (
@@ -96,7 +94,7 @@ class TwspaceDL:
         except (IndexError, json.JSONDecodeError) as err:
             raise RuntimeError("User is not live") from err
         format_str = format_str or FormatInfo.DEFAULT_FNAME_FORMAT
-        return cls(space_id, threads, format_str)
+        return cls(space_id, format_str)
 
     @staticmethod
     def guest_token() -> str:
@@ -292,8 +290,6 @@ class TwspaceDL:
             cmd_final.insert(10, concat_fn)
             cmd_final.append(re.escape(self.filename) + ".m4a")
 
-            # with ThreadPoolExecutor(max_workers=self.threads) as executor:
-            # executor.map(subprocess.run, (cmd_new, cmd_old), timeout=60)
             try:
                 subprocess.run(cmd_new, check=True)
                 subprocess.run(cmd_old, check=True)

@@ -86,19 +86,23 @@ def main() -> None:
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
     if args.input_url:
-        twspace_dl = TwspaceDL.from_space_url(args.input_url, args.threads, args.output)
+        twspace_dl = TwspaceDL.from_space_url(args.input_url, args.output)
+    elif args.user_url:
+        twspace_dl = TwspaceDL.from_user_url(args.user_url, args.output)
     else:
         twspace_dl = TwspaceDL.from_user_url(args.user_url, args.threads, args.output)
     if args.from_dynamic_url:
         twspace_dl.dyn_url = args.from_dynamic_url
     if args.from_master_url:
         twspace_dl.master_url = args.from_master_url
+
     if args.write_metadata:
         twspace_dl.write_metadata()
     if args.url:
         print(twspace_dl.master_url)
     if args.write_playlist:
         twspace_dl.write_playlist()
+
     if not args.skip_download:
         try:
             twspace_dl.download()
