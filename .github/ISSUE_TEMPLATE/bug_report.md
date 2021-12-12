@@ -18,6 +18,9 @@ A clear and concise description of what you expected to happen.
 
 **Output**
 If applicable, add the output of the command to help explain your problem.
+```text
+here
+```
 
 **Desktop (please complete the following information):**
  - OS: [e.g. Windows]
