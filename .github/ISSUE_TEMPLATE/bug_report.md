@@ -25,6 +25,7 @@ here
 **Desktop (please complete the following information):**
  - OS: [e.g. Windows]
  - Version [e.g. 2021.12.10.1]
+ - Installation method (binary, pip, or other)
 
 **Additional context**
 Add any other context about the problem here.
