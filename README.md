@@ -13,7 +13,7 @@
       <img src="https://img.shields.io/github/downloads/Ryu1845/twspace-dl/total?label=DOWNLOADS%20%28GITHUB%29&amp;style=for-the-badge" alt="Github Releases DLs">
     </a>
   </p>
-  <p>A python script to download twitter spaces.</p>
+  <p>A python module to download twitter spaces.</p>
 </div>
 
 ## Requirements
