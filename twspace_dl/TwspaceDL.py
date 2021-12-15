@@ -289,6 +289,6 @@ class TwspaceDL:
                 subprocess.run(cmd_old, check=True)
             except subprocess.CalledProcessError as err:
                 raise RuntimeError(" ".join(err.cmd)) from err
-            shutil.move(filename_old, self.filename + ".m4a")
+            shutil.move(filename_old, FormatInfo.sterilize_fn(self.filename) + ".m4a")
 
         logging.info("Finished downloading")
