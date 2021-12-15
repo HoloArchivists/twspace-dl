@@ -97,19 +97,6 @@ class FormatInfo(dict):
         if value in invalid_filenames:
             value = "_" + value
 
-        # Truncate filenames to valid length
-        max_len = 32
-
-        if len(value + extension) > max_len:
-            if len(extension) > len(value):
-                # Truncate extension instead of filename, no extension should be
-                # this long..
-                new_length = max_len - len(value)
-                extension = extension[:new_length]
-            else:
-                new_length = max_len - len(extension)
-                value = value[:new_length]
-
         return value + extension
 
     def format(self, format_str: str) -> str:
