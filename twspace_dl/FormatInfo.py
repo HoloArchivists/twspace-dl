@@ -31,7 +31,7 @@ class FormatInfo(dict):
         root = defaultdict(str, metadata["data"]["audioSpace"]["metadata"])
         creator_info = root["creator_results"]["result"]["legacy"]  # type: ignore
         self["id"] = root["rest_id"]
-        self["url"] = "https://twitter.com/spaces/" + self["id"]
+        self["url"] = "https://twitter.com/i/spaces/" + self["id"]
         self["title"] = root["title"]
         self["creator_name"] = creator_info["name"]  # type: ignore
         self["creator_screen_name"] = creator_info["screen_name"]  # type: ignore
@@ -100,4 +100,7 @@ class FormatInfo(dict):
         return value + extension
 
     def format(self, format_str: str) -> str:
-        return format_str % self
+        actual_format_str = os.path.basename(format_str)
+        abs_dir = os.path.dirname(format_str)
+        basename = self.sterilize_fn(actual_format_str % self)
+        return os.path.join(abs_dir, basename)

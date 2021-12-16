@@ -211,7 +211,7 @@ class TwspaceDL:
 
     def write_playlist(self, save_dir: str = "./") -> None:
         """Write the modified playlist for external use"""
-        filename = FormatInfo.sterilize_fn(os.path.basename(self.filename)) + ".m3u8"
+        filename = os.path.basename(self.filename) + ".m3u8"
         path = os.path.join(save_dir, filename)
         with open(path, "w", encoding="utf-8") as stream_io:
             stream_io.write(self.playlist_text)
@@ -245,7 +245,7 @@ class TwspaceDL:
             f"episode_id={self.id}",
         ]
 
-        filename = FormatInfo.sterilize_fn(os.path.basename(self.filename))
+        filename = os.path.basename(self.filename)
         filename_m3u8 = os.path.join(tempdir, filename + ".m3u8")
         filename_old = os.path.join(tempdir, filename + ".m4a")
         cmd_old = cmd_base.copy()
@@ -276,7 +276,7 @@ class TwspaceDL:
             cmd_final.insert(3, "-safe")
             cmd_final.insert(4, "0")
             cmd_final.insert(10, concat_fn)
-            cmd_final.append(FormatInfo.sterilize_fn(self.filename) + ".m4a")
+            cmd_final.append(self.filename + ".m4a")
 
             try:
                 subprocess.run(cmd_new, check=True)
@@ -289,6 +289,6 @@ class TwspaceDL:
                 subprocess.run(cmd_old, check=True)
             except subprocess.CalledProcessError as err:
                 raise RuntimeError(" ".join(err.cmd)) from err
-            shutil.move(filename_old, FormatInfo.sterilize_fn(self.filename) + ".m4a")
+            shutil.move(filename_old, self.filename + ".m4a")
 
         logging.info("Finished downloading")
