@@ -45,7 +45,6 @@ def get_args() -> argparse.Namespace:
             "audio-space/dynamic_playlist.m3u8?type=live"
         ),
     )
-
     input_group.add_argument(
         "-f",
         "--from-master-url",
@@ -83,6 +82,9 @@ def get_args() -> argparse.Namespace:
     )
     output_group.add_argument(
         "-u", "--url", action="store_true", help="display the master url"
+    )
+    output_group.add_argument(
+        "--write-url", type=str, metavar="URL_OUTPUT", help="write master url to file"
     )
 
     if len(sys.argv) == 1:
@@ -129,6 +131,9 @@ def main() -> None:
             metadata_io.write(metadata)
     if args.url:
         print(twspace_dl.master_url)
+    if args.write_url:
+        with open(args.write_url, "w", encoding="utf-8") as url_output:
+            url_output.write(twspace_dl.master_url)
     if args.write_playlist:
         twspace_dl.write_playlist()
 
