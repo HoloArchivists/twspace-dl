@@ -198,7 +198,7 @@ class TwspaceDL:
     def master_url(self) -> str:
         """Master URL for a space"""
         master_url = re.sub(
-            r"(?<=/audio-space/)\w*", "master_playlist.m3u8", self.dyn_url
+            r"(?<=/audio-space/).*", "master_playlist.m3u8", self.dyn_url
         )
         return master_url
 
