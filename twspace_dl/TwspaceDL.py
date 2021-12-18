@@ -5,6 +5,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import time
 
 from functools import cached_property
 from urllib.parse import urlparse
@@ -100,6 +101,8 @@ class TwspaceDL:
             guest_token_list = re.findall(r"(?<=gt\=)\d{19}", response)
             if len(guest_token_list) != 0:
                 guest_token = guest_token_list[0]
+            else:
+                time.sleep(1)
         if not guest_token:
             raise RuntimeError("No guest token found after five retry")
         logging.debug(guest_token)
@@ -156,7 +159,12 @@ class TwspaceDL:
     @cached_property
     def dyn_url(self) -> str:
         metadata = self.metadata
-        if metadata["data"]["audioSpace"]["metadata"]["state"] == "Ended":
+        if (
+            metadata["data"]["audioSpace"]["metadata"]["state"] == "Ended"
+            and not metadata["data"]["audioSpace"]["metadata"][
+                "is_space_available_for_replay"
+            ]
+        ):
             logging.error(
                 (
                     "Can't Download. Space has ended, can't retrieve master url. "
@@ -187,8 +195,8 @@ class TwspaceDL:
     @cached_property
     def master_url(self) -> str:
         """Master URL for a space"""
-        master_url = self.dyn_url.replace(
-            "dynamic_playlist.m3u8?type=live", "master_playlist.m3u8"
+        master_url = re.sub(
+            r"(?<=/audio-space/)\w*", "master_playlist.m3u8", self.dyn_url
         )
         return master_url
 
@@ -205,7 +213,8 @@ class TwspaceDL:
     def playlist_text(self) -> str:
         """Modify the chunks URL using the master one to be able to download"""
         playlist_text = requests.get(self.playlist_url).text
-        master_url_wo_file = self.master_url.replace("/master_playlist.m3u8", "/")
+        master_url_wo_file = re.sub("master_playlist\.m3u8.*", "", self.master_url)
+        print(master_url_wo_file)
         playlist_text = re.sub(r"(?=chunk)", master_url_wo_file, playlist_text)
         return playlist_text
 
@@ -264,10 +273,10 @@ class TwspaceDL:
             with open(concat_fn, "w", encoding="utf-8") as list_io:
                 list_io.write(
                     "file "
-                    + f"'{os.path.join(os.getcwd(), filename_old)}'"
+                    + f"'{os.path.abspath(os.path.join(os.getcwd(), filename_old))}'"
                     + "\n"
                     + "file "
-                    + f"'{os.path.join(os.getcwd(), filename_new)}'"
+                    + f"'{os.path.abspath(os.path.join(os.getcwd(), filename_new))}'"
                 )
 
             cmd_final = cmd_base.copy()

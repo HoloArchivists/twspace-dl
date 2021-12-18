@@ -16,14 +16,6 @@ def get_args() -> argparse.Namespace:
     input_group = parser.add_argument_group("input")
     output_group = parser.add_argument_group("output")
 
-    parser.add_argument(
-        "-t",
-        "--threads",
-        type=int,
-        metavar="THREADS",
-        help="number of threads to run the script with(default with max)",
-        default=os.cpu_count(),
-    )
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument("-s", "--skip-download", action="store_true")
     parser.add_argument("-k", "--keep-files", action="store_true")
