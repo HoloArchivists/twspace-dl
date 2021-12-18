@@ -95,16 +95,18 @@ class TwspaceDL:
 
     @staticmethod
     def guest_token() -> str:
-        response = requests.get("https://twitter.com/").text
         guest_token = ""
-        for _ in range(5):
+        for i in range(5):
+            response = requests.get("https://twitter.com/").text
             guest_token_list = re.findall(r"(?<=gt\=)\d{19}", response)
             if len(guest_token_list) != 0:
                 guest_token = guest_token_list[0]
             else:
+                print(f"trying to get guest token try number:{i}", end="\r")
                 time.sleep(1)
         if not guest_token:
             raise RuntimeError("No guest token found after five retry")
+        print()
         logging.debug(guest_token)
         return guest_token
 
