@@ -1,0 +1,27 @@
+version: '3.9'
+
+services:
+  twspace_dl:
+    image: ghcr.io/jim60105/twspace-dl
+    # build: .
+    restart: "no"
+    volumes:
+      - ./:/output
+    command: ["-U", "https://twitter.com/${TWITTER_ID}"]
+    # logging:
+    #   driver: "gelf"
+    #   options:
+    #     gelf-address: "udp://127.0.0.1:12201"
+
+  jobber:
+    image: blacklabelops/jobber:docker
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./:/docker:ro
+    environment:
+      - JOB_NAME1=record
+      - JOB_COMMAND1=cd /docker && docker-compose start twspace_dl
+      - JOB_TIME1=*/30 * * * * * #Every 30 seconds
+      - JOB_NOTIFY_ERR1=true
+      - JOB_NOTIFY_FAIL1=true
