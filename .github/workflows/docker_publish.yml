@@ -33,7 +33,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }},ghcr.io/${{ github.repository }}
+          images: ryu1845/${{ github.event.repository.name }},ghcr.io/${{ github.repository }}
           flavor: |
             latest=${{ github.ref == 'refs/heads/main' }}
             prefix=
@@ -46,7 +46,7 @@ jobs:
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ryu1845
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # Create a Access Token with `read:packages` and `write:packages` scopes
