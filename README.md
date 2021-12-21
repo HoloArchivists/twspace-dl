@@ -185,7 +185,7 @@ sudo systemctl enable twspace-dl@USER_ID.service
 > Use ${pwd} in powershell, or $(pwd) in bash
 
 ```bash
-docker run --rm -v ${pwd}:/output jim60105/twspace-dl -i space_url
+docker run --rm -v ${pwd}:/output ryu1845/twspace-dl -i space_url
 ```
 
 ### Run as monitoring service
