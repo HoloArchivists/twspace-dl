@@ -1,10 +1,11 @@
-version: '3.9'
+version: '3.7'
 
 services:
   twspace_dl:
     image: ghcr.io/jim60105/twspace-dl
     # build: .
     restart: "no"
+    env_file: .env
     volumes:
       - ./:/output
     command: ["-U", "https://twitter.com/${TWITTER_ID}"]
