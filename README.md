@@ -190,6 +190,6 @@ docker run --rm -v ${pwd}:/output jim60105/twspace-dl -i space_url
 
 ### Run as monitoring service
 
-1. Download the `docker-compose.yml` and `.env` files and put them in the same folder.
+1. Download the `docker-compose.yml` and `.env` files and put them in a folder named `twspace-dl`.
 1. Edit `.env` and fill in the Twitter username you want to monitor.
 1. `docker-compose up -d`
