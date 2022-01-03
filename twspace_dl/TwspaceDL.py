@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 import requests
 
 from .FormatInfo import FormatInfo
+from .Login import Login
 
 
 class TwspaceDL:
@@ -34,18 +35,8 @@ class TwspaceDL:
         return cls(space_id, format_str)
 
     @classmethod
-    def from_user_url(cls, url: str, format_str: str):
-        screen_name = re.findall(r"(?<=twitter.com/)\w*", url)[0]
-        params = {
-            "variables": (
-                "{"
-                f'"screen_name":"{screen_name}",'
-                '"withSafetyModeUserFields":true,'
-                '"withSuperFollowsUserFields":true,'
-                '"withNftAvatar":false'
-                "}"
-            )
-        }
+    def from_user_tweets(cls, url: str, format_str: str):
+        user_id = TwspaceDL.user_id(url)
         headers = {
             "authorization": (
                 "Bearer "
@@ -54,14 +45,6 @@ class TwspaceDL:
             ),
             "x-guest-token": TwspaceDL.guest_token(),
         }
-        response = requests.get(
-            "https://twitter.com/i/api/graphql/1CL-tn62bpc-zqeQrWm4Kw/UserByScreenName",
-            headers=headers,
-            params=params,
-        )
-        user_data = response.json()
-        user_id = user_data["data"]["user"]["result"]["rest_id"]
-
         params = {
             "variables": (
                 "{"
@@ -92,6 +75,61 @@ class TwspaceDL:
         except (IndexError, json.JSONDecodeError) as err:
             raise RuntimeError("User is not live") from err
         return cls(space_id, format_str)
+
+    @classmethod
+    def from_user_avatar(cls, user_url, format_str, username, password):
+        login = Login(username, password, TwspaceDL.guest_token())
+        auth_token = login.login()
+        headers = {
+            "authorization": (
+                "Bearer "
+                "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
+                "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
+            ),
+            "cookie": f"auth_token={auth_token};",
+        }
+        user_id = TwspaceDL.user_id(user_url)
+        r = requests.get(
+            f"https://twitter.com/i/api/fleets/v1/avatar_content?user_ids={user_id}&only_spaces=true",
+            headers=headers,
+        )
+
+        obj = r.json()
+        broadcast_id = obj["users"][user_id]["spaces"]["live_content"]["audiospace"][
+            "broadcast_id"
+        ]
+        return cls(broadcast_id, format_str)
+
+    @staticmethod
+    def user_id(user_url: str) -> str:
+        screen_name = re.findall(r"(?<=twitter.com/)\w*", user_url)[0]
+
+        params = {
+            "variables": (
+                "{"
+                f'"screen_name":"{screen_name}",'
+                '"withSafetyModeUserFields":true,'
+                '"withSuperFollowsUserFields":true,'
+                '"withNftAvatar":false'
+                "}"
+            )
+        }
+        headers = {
+            "authorization": (
+                "Bearer "
+                "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
+                "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
+            ),
+            "x-guest-token": TwspaceDL.guest_token(),
+        }
+        response = requests.get(
+            "https://twitter.com/i/api/graphql/1CL-tn62bpc-zqeQrWm4Kw/UserByScreenName",
+            headers=headers,
+            params=params,
+        )
+        user_data = response.json()
+        user_id = user_data["data"]["user"]["result"]["rest_id"]
+        return user_id
 
     @staticmethod
     def guest_token() -> str:

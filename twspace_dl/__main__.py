@@ -19,6 +19,8 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument("-s", "--skip-download", action="store_true")
     parser.add_argument("-k", "--keep-files", action="store_true")
+    parser.add_argument("--username", type=str, metavar="USERNAME")
+    parser.add_argument("--password", type=str, metavar="PASSWORD")
 
     input_group.add_argument("-i", "--input-url", type=str, metavar="SPACE_URL")
     input_group.add_argument("-U", "--user-url", type=str, metavar="USER_URL")
@@ -110,7 +112,12 @@ def main() -> None:
     if args.input_url:
         twspace_dl = TwspaceDL.from_space_url(args.input_url, args.output)
     elif args.user_url:
-        twspace_dl = TwspaceDL.from_user_url(args.user_url, args.output)
+        if args.username and args.password:
+            twspace_dl = TwspaceDL.from_user_avatar(
+                args.user_url, args.output, args.username, args.password
+            )
+        else:
+            twspace_dl = TwspaceDL.from_user_tweets(args.user_url, args.output)
     else:
         with open(args.input_metadata, "r", encoding="utf-8") as metadata_io:
             metadata = json.load(metadata_io)
