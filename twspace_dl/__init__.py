@@ -1,4 +1,4 @@
-from .FormatInfo import FormatInfo
-from .TwspaceDL import TwspaceDL
+from .format_info import FormatInfo
+from .twspace_dl import TwspaceDL
 
 __all__ = ["FormatInfo", "TwspaceDL"]
