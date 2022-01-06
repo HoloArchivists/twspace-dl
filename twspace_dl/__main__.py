@@ -6,7 +6,7 @@ import os
 import shutil
 import sys
 
-from twspace_dl.TwspaceDL import TwspaceDL
+from twspace_dl.twspace_dl import TwspaceDL
 
 
 def get_args() -> argparse.Namespace:

@@ -12,8 +12,8 @@ from urllib.parse import urlparse
 
 import requests
 
-from .FormatInfo import FormatInfo
-from .Login import Login
+from .format_info import FormatInfo
+from .login import Login
 
 
 class TwspaceDL:
