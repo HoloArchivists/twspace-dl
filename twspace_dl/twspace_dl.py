@@ -146,7 +146,6 @@ class TwspaceDL:
         guest_token = response["guest_token"]
         if not guest_token:
             raise RuntimeError("No guest token found after five retry")
-        print()
         logging.debug(guest_token)
         return guest_token
 
@@ -256,7 +255,6 @@ class TwspaceDL:
         """Modify the chunks URL using the master one to be able to download"""
         playlist_text = requests.get(self.playlist_url).text
         master_url_wo_file = re.sub("master_playlist\.m3u8.*", "", self.master_url)
-        print(master_url_wo_file)
         playlist_text = re.sub(r"(?=chunk)", master_url_wo_file, playlist_text)
         return playlist_text
 
