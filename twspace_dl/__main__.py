@@ -10,12 +10,12 @@ from twspace_dl.twspace_dl import TwspaceDL
 from twspace_dl.login import Login, load_from_file, write_to_file
 
 
-def get_args() -> argparse.Namespace:
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Script designed to help download twitter spaces"
     )
     subparsers = parser.add_subparsers(
-        help="(EXPERIMENTAL) Login to your account using username and password"
+        help="(EXPERIMENTAL) Login to your account using username and password",
     )
     login_parser = subparsers.add_parser("login", description="EXPERIMENTAL")
     input_group = parser.add_argument_group("input")
@@ -27,11 +27,20 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("-k", "--keep-files", action="store_true")
     parser.add_argument("--input-cookie-file", type=str, metavar="COOKIE_FILE")
 
-    login_parser.add_argument("-u", "--username", type=str, metavar="USERNAME")
-    login_parser.add_argument("-p", "--password", type=str, metavar="PASSWORD")
     login_parser.add_argument(
-        "-o", "--output-cookie-file", type=str, metavar="OUTPUT_COOKIE_FILE"
+        "-u", "--username", type=str, metavar="USERNAME", default=None
     )
+    login_parser.add_argument(
+        "-p", "--password", type=str, metavar="PASSWORD", default=None
+    )
+    login_parser.add_argument(
+        "-o",
+        "--output-cookie-file",
+        type=str,
+        metavar="OUTPUT_COOKIE_FILE",
+        default=None,
+    )
+    login_parser.set_defaults(func=login)
 
     input_method.add_argument("-i", "--input-url", type=str, metavar="SPACE_URL")
     input_method.add_argument("-U", "--user-url", type=str, metavar="USER_URL")
@@ -99,22 +108,15 @@ def get_args() -> argparse.Namespace:
     output_group.add_argument(
         "--write-url", type=str, metavar="URL_OUTPUT", help="write master url to file"
     )
+    parser.set_defaults(func=twspace)
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
     args = parser.parse_args()
-    return args
+    args.func(args)
 
 
-def main() -> None:
-    args = get_args()
-    has_input = (
-        args.input_url
-        or args.input_metadata
-        or args.user_url
-        or args.from_master_url
-        or args.from_dynamic_url
-    )
+def login(args: argparse.Namespace) -> None:
     has_partial_login = (
         args.username or args.password or args.output_cookie_file  # has at least one
     ) and not (
@@ -125,18 +127,26 @@ def main() -> None:
         print("login needs both username, password, and output file")
         sys.exit(2)
 
-    if not has_input and not (
-        args.username or args.password or args.output_cookie_file
-    ):
-        print("Either space url, user url or master url should be provided")
-        sys.exit(2)
-
-    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
-
     if args.username and args.password and args.output_cookie_file:
         login = Login(args.username, args.password, TwspaceDL.guest_token())
         auth_token = login.login()
         write_to_file(auth_token, args.output_cookie_file)
+
+
+def twspace(args: argparse.Namespace) -> None:
+    has_input = (
+        args.input_url
+        or args.input_metadata
+        or args.user_url
+        or args.from_master_url
+        or args.from_dynamic_url
+    )
+
+    if not has_input:
+        print("Either space url, user url or master url should be provided")
+        sys.exit(2)
+
+    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
     if args.input_url:
         twspace_dl = TwspaceDL.from_space_url(args.input_url, args.output)
