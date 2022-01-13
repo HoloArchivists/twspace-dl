@@ -5,7 +5,6 @@ import re
 import shutil
 import subprocess
 import tempfile
-import time
 
 from functools import cached_property
 from urllib.parse import urlparse
@@ -13,7 +12,6 @@ from urllib.parse import urlparse
 import requests
 
 from .format_info import FormatInfo
-from .login import Login
 
 
 class TwspaceDL:
@@ -22,10 +20,12 @@ class TwspaceDL:
     def __init__(self, space_id: str, format_str: str) -> None:
         self.id = space_id
         self.format_str = format_str or FormatInfo.DEFAULT_FNAME_FORMAT
+        self.session = requests.Session()
         self._tmpdir: str
 
     @classmethod
     def from_space_url(cls, url: str, format_str: str):
+        """Create a TwspaceDL object from a space url"""
         if not url:
             logging.warning("No space url given, file won't have any metadata")
             space_id = "no_id"
@@ -36,6 +36,8 @@ class TwspaceDL:
 
     @classmethod
     def from_user_tweets(cls, url: str, format_str: str):
+        """Create a TwspaceDL object from the first space
+        found in the 20 last user tweets"""
         user_id = TwspaceDL.user_id(url)
         headers = {
             "authorization": (
@@ -77,9 +79,8 @@ class TwspaceDL:
         return cls(space_id, format_str)
 
     @classmethod
-    def from_user_avatar(cls, user_url, format_str, username, password):
-        login = Login(username, password, TwspaceDL.guest_token())
-        auth_token = login.login()
+    def from_user_avatar(cls, user_url, format_str, auth_token):
+        """Create a TwspaceDL object from a twitter user ongoing space"""
         headers = {
             "authorization": (
                 "Bearer "
@@ -89,19 +90,21 @@ class TwspaceDL:
             "cookie": f"auth_token={auth_token};",
         }
         user_id = TwspaceDL.user_id(user_url)
-        r = requests.get(
-            f"https://twitter.com/i/api/fleets/v1/avatar_content?user_ids={user_id}&only_spaces=true",
+        params = {"user_ids": user_id, "only_spaces": "true"}
+        avatar_content = requests.get(
+            f"https://twitter.com/i/api/fleets/v1/avatar_content",
+            params=params,
             headers=headers,
-        )
+        ).json()
 
-        obj = r.json()
-        broadcast_id = obj["users"][user_id]["spaces"]["live_content"]["audiospace"][
-            "broadcast_id"
-        ]
+        broadcast_id = avatar_content["users"][user_id]["spaces"]["live_content"][
+            "audiospace"
+        ]["broadcast_id"]
         return cls(broadcast_id, format_str)
 
     @staticmethod
     def user_id(user_url: str) -> str:
+        """Get the id of a twitter using the url linking to their account"""
         screen_name = re.findall(r"(?<=twitter.com/)\w*", user_url)[0]
 
         params = {
@@ -133,6 +136,7 @@ class TwspaceDL:
 
     @staticmethod
     def guest_token() -> str:
+        """Generate a guest token to authorize twitter api requests"""
         headers = {
             "authorization": (
                 "Bearer "

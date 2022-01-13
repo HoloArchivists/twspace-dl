@@ -1,5 +1,21 @@
+"Module providing login utilities for twspace_dl"
+import re
+
 import requests
-from typing import Optional
+
+
+def load_from_file(filename: str) -> str:
+    """return auth_token from netscape cookie file"""
+    return re.findall(
+        r"(?<=auth_token.{8}).{33}", open(filename, "r", encoding="utf-8").read()
+    )[0]
+
+
+def write_to_file(auth_token: str, filename: str) -> None:
+    """Write cookie to file in a format recognizable by the module
+    (`auth_token        {auth_token}`)"""
+    with open(filename, "w", encoding="utf-8") as cookie_file:
+        cookie_file.write("auth_token" + 8 * " " + auth_token)
 
 
 class Login:
@@ -11,7 +27,7 @@ class Login:
         self.task_url = "https://twitter.com/i/api/1.1/onboarding/task.json"
         self.flow_token: str
 
-    def login(self) -> Optional[str]:
+    def login(self) -> str:
         request_flow = self.session.post(
             self.task_url,
             params={"flow_name": "login"},
@@ -20,9 +36,10 @@ class Login:
         )
         try:
             self.flow_token = request_flow.json()["flow_token"]
-        except KeyError:
-            print("Error while intiial_params:", request_flow.json())
-            return None
+        except KeyError as err:
+            raise RuntimeError(
+                "Error while initiating parameters:", request_flow.json()
+            ) from err
 
         # js instrumentation subtask
         request_flow = self.session.post(
@@ -30,9 +47,10 @@ class Login:
         )
         try:
             self.flow_token = request_flow.json()["flow_token"]
-        except KeyError:
-            print("Error while task0:", request_flow.json())
-            return None
+        except KeyError as err:
+            raise RuntimeError(
+                "Error while performing js instrumentation:", request_flow.json()
+            ) from err
 
         # user identifier sso subtask
         request_flow = self.session.post(
@@ -40,9 +58,8 @@ class Login:
         )
         try:
             self.flow_token = request_flow.json()["flow_token"]
-        except KeyError:
-            print("Error while task1:", request_flow.json())
-            return None
+        except KeyError as err:
+            raise RuntimeError("Error identifying user:", request_flow.json()) from err
 
         # account duplication check
         request_flow = self.session.post(
@@ -50,9 +67,10 @@ class Login:
         )
         try:
             self.flow_token = request_flow.json()["flow_token"]
-        except KeyError:
-            print("Error while task2:", request_flow.json())
-            return None
+        except KeyError as err:
+            raise RuntimeError(
+                "Error while checking account duplication:", request_flow.json()
+            ) from err
 
         # enter password
         request_flow = self.session.post(
@@ -60,9 +78,11 @@ class Login:
         )
         try:
             auth_token = str(request_flow.cookies["auth_token"])
-        except KeyError:
-            print("Error while task6:", request_flow.json())
-            return None
+        except KeyError as err:
+            raise RuntimeError(
+                "Error while while entering password:", request_flow.json()
+            ) from err
+
         return auth_token
 
     @property

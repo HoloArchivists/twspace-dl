@@ -70,42 +70,45 @@ twspace_dl -i space_url
 Here's the output of the help option
 
 ```txt
-usage: twspace_dl [-h] [-t THREADS] [-v] [-s] [-k] [-i SPACE_URL] [-U USER_URL] [-M PATH] [-d DYN_URL] [-f URL]
-                  [-o FORMAT_STR] [-m] [-p] [-u]
+usage: twspace_dl [-h] [-v] [-s] [-k] [--input-cookie-file COOKIE_FILE] [-i SPACE_URL | -U USER_URL] [-d DYN_URL] [-f URL] [-M PATH] [-o FORMAT_STR] [-m] [-p] [-u] [--write-url URL_OUTPUT] {login} ...
 
 Script designed to help download twitter spaces
 
-optional arguments:
+positional arguments:
+  {login}               (EXPERIMENTAL) Login to your account using username and password
+
+options:
   -h, --help            show this help message and exit
-  -t THREADS, --threads THREADS
-                        number of threads to run the script with(default with max)
   -v, --verbose
   -s, --skip-download
   -k, --keep-files
+  --input-cookie-file COOKIE_FILE
 
 input:
   -i SPACE_URL, --input-url SPACE_URL
   -U USER_URL, --user-url USER_URL
+  -d DYN_URL, --from-dynamic-url DYN_URL
+                        use the dynamic url for the processes(useful for ended spaces) 
+                        example: https://prod-fastly-ap-northeast-1.video.pscp.tv/Transcoding/v1/hls/
+                        zUUpEgiM0M18jCGxo2eSZs99p49hfyFQr1l4cdze-Sp4T-DQOMMoZpkbdyetgfwscfvvUkAdeF-I5hPI4bGoYg/
+                        non_transcode/ap-northeast-1/periscope-replay-direct-prod-ap-northeast-1-public/
+                        audio-space/dynamic_playlist.m3u8?type=live
+  -f URL, --from-master-url URL
+                        use the master url for the processes(useful for ended spaces) 
+                        example: https://prod-fastly-ap-northeast-1.video.pscp.tv/Transcoding/v1/hls/
+                        YRSsw6_P5xUZHMualK5-ihvePR6o4QmoZVOBGicKvmkL_KB9IQYtxVqm3P_vpZ2HnFkoRfar4_uJOjqC8OCo5A/
+                        non_transcode/ap-northeast-1/periscope-replay-direct-prod-ap-
+                        northeast-1-public/audio-space/master_playlist.m3u8
   -M PATH, --input-metadata PATH
                         use a metadata json file instead of input url (useful for very old ended spaces)
-  -d DYN_URL, --from-dynamic-url DYN_URL
-                        use the dynamic url for the processes(useful for ended spaces) example: https://prod-
-                        fastly-ap-
-                        northeast-1.video.pscp.tv/Transcoding/v1/hls/zUUpEgiM0M18jCGxo2eSZs99p49hfyFQr1l4cdze-
-                        Sp4T-DQOMMoZpkbdyetgfwscfvvUkAdeF-I5hPI4bGoYg/non_transcode/ap-northeast-1/periscope-
-                        replay-direct-prod-ap-northeast-1-public/audio-space/dynamic_playlist.m3u8?type=live
-  -f URL, --from-master-url URL
-                        use the master url for the processes(useful for ended spaces) example: https://prod-
-                        fastly-ap-northeast-1.video.pscp.tv/Transcoding/v1/hls/YRSsw6_P5xUZHMualK5-ihvePR6o4QmoZV
-                        OBGicKvmkL_KB9IQYtxVqm3P_vpZ2HnFkoRfar4_uJOjqC8OCo5A/non_transcode/ap-
-                        northeast-1/periscope-replay-direct-prod-ap-northeast-1-public/audio-
-                        space/master_playlist.m3u8
 
 output:
   -o FORMAT_STR, --output FORMAT_STR
   -m, --write-metadata  write the full metadata json to a file
   -p, --write-playlist  write the m3u8 used to download the stream(e.g. if you want to use another downloader)
   -u, --url             display the master url
+  --write-url URL_OUTPUT
+                        write master url to file
 ```
 
 ## Format

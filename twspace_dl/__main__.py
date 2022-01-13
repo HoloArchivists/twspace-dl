@@ -7,33 +7,34 @@ import shutil
 import sys
 
 from twspace_dl.twspace_dl import TwspaceDL
+from twspace_dl.login import Login, load_from_file, write_to_file
 
 
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Script designed to help download twitter spaces"
     )
+    subparsers = parser.add_subparsers(
+        help="(EXPERIMENTAL) Login to your account using username and password"
+    )
+    login_parser = subparsers.add_parser("login", description="EXPERIMENTAL")
     input_group = parser.add_argument_group("input")
+    input_method = input_group.add_mutually_exclusive_group()
     output_group = parser.add_argument_group("output")
 
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument("-s", "--skip-download", action="store_true")
     parser.add_argument("-k", "--keep-files", action="store_true")
-    parser.add_argument("--username", type=str, metavar="USERNAME")
-    parser.add_argument("--password", type=str, metavar="PASSWORD")
+    parser.add_argument("--input-cookie-file", type=str, metavar="COOKIE_FILE")
 
-    input_group.add_argument("-i", "--input-url", type=str, metavar="SPACE_URL")
-    input_group.add_argument("-U", "--user-url", type=str, metavar="USER_URL")
-    input_group.add_argument(
-        "-M",
-        "--input-metadata",
-        type=str,
-        metavar="PATH",
-        help=(
-            "use a metadata json file instead of input url\n"
-            "(useful for very old ended spaces)"
-        ),
+    login_parser.add_argument("-u", "--username", type=str, metavar="USERNAME")
+    login_parser.add_argument("-p", "--password", type=str, metavar="PASSWORD")
+    login_parser.add_argument(
+        "-o", "--output-cookie-file", type=str, metavar="OUTPUT_COOKIE_FILE"
     )
+
+    input_method.add_argument("-i", "--input-url", type=str, metavar="SPACE_URL")
+    input_method.add_argument("-U", "--user-url", type=str, metavar="USER_URL")
     input_group.add_argument(
         "-d",
         "--from-dynamic-url",
@@ -58,6 +59,16 @@ def get_args() -> argparse.Namespace:
             "YRSsw6_P5xUZHMualK5-ihvePR6o4QmoZVOBGicKvmkL_KB9IQYtxVqm3P_vpZ2HnFkoRfar4_uJOjqC8OCo5A/"
             "non_transcode/ap-northeast-1/periscope-replay-direct-prod-ap-northeast-1-public/"
             "audio-space/master_playlist.m3u8"
+        ),
+    )
+    input_group.add_argument(
+        "-M",
+        "--input-metadata",
+        type=str,
+        metavar="PATH",
+        help=(
+            "use a metadata json file instead of input url\n"
+            "(useful for very old ended spaces)"
         ),
     )
 
@@ -88,7 +99,6 @@ def get_args() -> argparse.Namespace:
     output_group.add_argument(
         "--write-url", type=str, metavar="URL_OUTPUT", help="write master url to file"
     )
-
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
@@ -98,23 +108,43 @@ def get_args() -> argparse.Namespace:
 
 def main() -> None:
     args = get_args()
-    if (
-        not args.input_url
-        and not args.input_metadata
-        and not args.user_url
-        and not args.from_master_url
+    has_input = (
+        args.input_url
+        or args.input_metadata
+        or args.user_url
+        or args.from_master_url
+        or args.from_dynamic_url
+    )
+    has_partial_login = (
+        args.username or args.password or args.output_cookie_file  # has at least one
+    ) and not (
+        args.username and args.password and args.output_cookie_file  # has both
+    )  # has one but not both
+
+    if has_partial_login:
+        print("login needs both username, password, and output file")
+        sys.exit(2)
+
+    if not has_input and not (
+        args.username or args.password or args.output_cookie_file
     ):
         print("Either space url, user url or master url should be provided")
-        sys.exit(1)
+        sys.exit(2)
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
+
+    if args.username and args.password and args.output_cookie_file:
+        login = Login(args.username, args.password, TwspaceDL.guest_token())
+        auth_token = login.login()
+        write_to_file(auth_token, args.output_cookie_file)
 
     if args.input_url:
         twspace_dl = TwspaceDL.from_space_url(args.input_url, args.output)
     elif args.user_url:
-        if args.username and args.password:
+        if args.input_cookie_file:
+            auth_token = load_from_file(args.input_cookie_file)
             twspace_dl = TwspaceDL.from_user_avatar(
-                args.user_url, args.output, args.username, args.password
+                args.user_url, args.output, auth_token
             )
         else:
             twspace_dl = TwspaceDL.from_user_tweets(args.user_url, args.output)
