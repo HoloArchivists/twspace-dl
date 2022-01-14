@@ -158,13 +158,17 @@ def twspace(args: argparse.Namespace) -> None:
             )
         else:
             twspace_dl = TwspaceDL.from_user_tweets(args.user_url, args.output)
-    else:
+    elif args.input_metadata:
         with open(args.input_metadata, "r", encoding="utf-8") as metadata_io:
             metadata = json.load(metadata_io)
         twspace_dl = TwspaceDL(
             metadata["data"]["audioSpace"]["metadata"]["rest_id"], args.output
         )
         twspace_dl.metadata = metadata
+    else:
+        print(
+            "Please provide an input source for metadata (input url, or metadata json)"
+        )
 
     if args.from_dynamic_url:
         twspace_dl.dyn_url = args.from_dynamic_url
