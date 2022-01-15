@@ -7,7 +7,7 @@ import requests
 def load_from_file(filename: str) -> str:
     """return auth_token from netscape cookie file"""
     return re.findall(
-        r"(?<=auth_token.{8}).{33}", open(filename, "r", encoding="utf-8").read()
+        r"(?<=auth_token\s)\w{40}", open(filename, "r", encoding="utf-8").read()
     )[0]
 
 
