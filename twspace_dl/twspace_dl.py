@@ -31,7 +31,10 @@ class TwspaceDL:
             space_id = "no_id"
             format_str = "no_info"
         else:
-            space_id = re.findall(r"(?<=spaces/)\w*", url)[0]
+            try:
+                space_id = re.findall(r"(?<=spaces/)\w*", url)[0]
+            except IndexError as err:
+                raise ValueError("Input URL is not valid") from err
         return cls(space_id, format_str)
 
     @classmethod

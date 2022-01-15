@@ -148,9 +148,7 @@ def twspace(args: argparse.Namespace) -> None:
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
-    if args.input_url:
-        twspace_dl = TwspaceDL.from_space_url(args.input_url, args.output)
-    elif args.user_url:
+    if args.user_url:
         if args.input_cookie_file:
             auth_token = load_from_file(args.input_cookie_file)
             twspace_dl = TwspaceDL.from_user_avatar(
@@ -166,9 +164,7 @@ def twspace(args: argparse.Namespace) -> None:
         )
         twspace_dl.metadata = metadata
     else:
-        print(
-            "Please provide an input source for metadata (input url, or metadata json)"
-        )
+        twspace_dl = TwspaceDL.from_space_url(args.input_url, args.output)
 
     if args.from_dynamic_url:
         twspace_dl.dyn_url = args.from_dynamic_url
