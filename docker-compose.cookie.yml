@@ -1,0 +1,6 @@
+services:
+  twspace-dl:
+      command: ["-U", "https://twitter.com/${TWITTER_ID}", "--input-cookie-file", "/cookies.txt"]
+      volumes:
+        - ./:/output
+        - ${COOKIE}:/cookies.txt
