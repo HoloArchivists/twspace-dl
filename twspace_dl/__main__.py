@@ -148,9 +148,7 @@ def twspace(args: argparse.Namespace) -> None:
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
-    if args.input_url:
-        twspace_dl = TwspaceDL.from_space_url(args.input_url, args.output)
-    elif args.user_url:
+    if args.user_url:
         if args.input_cookie_file:
             auth_token = load_from_file(args.input_cookie_file)
             twspace_dl = TwspaceDL.from_user_avatar(
@@ -158,13 +156,15 @@ def twspace(args: argparse.Namespace) -> None:
             )
         else:
             twspace_dl = TwspaceDL.from_user_tweets(args.user_url, args.output)
-    else:
+    elif args.input_metadata:
         with open(args.input_metadata, "r", encoding="utf-8") as metadata_io:
             metadata = json.load(metadata_io)
         twspace_dl = TwspaceDL(
             metadata["data"]["audioSpace"]["metadata"]["rest_id"], args.output
         )
         twspace_dl.metadata = metadata
+    else:
+        twspace_dl = TwspaceDL.from_space_url(args.input_url, args.output)
 
     if args.from_dynamic_url:
         twspace_dl.dyn_url = args.from_dynamic_url
