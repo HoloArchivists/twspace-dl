@@ -197,7 +197,7 @@ Using a cookie can help solve some problem with the twitter api. However, using 
 
 #### Without cookie
 
-1. Download the `docker-compose.yml` and `.env` files and put them in a folder named `twspace-dl`.
+1. Download the `docker-compose.yml`, `.env`, `monitor.sh` files and put them in a folder named `twspace-dl`.
 2. Edit `.env` and fill in the Twitter username you want to monitor.
 3. \[Optional] If you want to used a cookies file, put it into the folder and named it `cookies.txt`.
 4. `docker-compose up -d`
