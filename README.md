@@ -124,7 +124,7 @@ You can use the following identifiers for the formatting
 %(url)s
 ```
 
-Example: `[%(creator_screen_name)s]-%(title)s|%(start_date)s`
+Example: `[%(creator_screen_name)s]-%(title)s|%(start_date)s`
 
 ## Service
 
@@ -196,11 +196,8 @@ docker run --rm -v ${pwd}:/output ryu1845/twspace-dl -i space_url
 Using a cookie can help solve some problem with the twitter api. However, using one is not necessary.
 
 #### Without cookie
+
 1. Download the `docker-compose.yml` and `.env` files and put them in a folder named `twspace-dl`.
 2. Edit `.env` and fill in the Twitter username you want to monitor.
-3. `docker-compose up -d`
-
-#### With cookies.txt
-1. Download the `docker-compose.yml`, `docker-compose.cookie.yml` and `.env` files and put them in a folder named `twspace-dl`.
-2. Edit `.env` and fill in the Twitter username you want to monitor and the path of your cookies.
-3. `docker-compose -f docker-compose.yml -f docker-compose.cookie.yml up -d`
+3. \[Optional] If you want to used a cookies file, put it into the folder and named it `cookies.txt`.
+4. `docker-compose up -d`
