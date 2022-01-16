@@ -85,14 +85,23 @@ class Login:
         request_flow = self.session.post(
             self.task_url, headers=self._headers, json=self._enter_password_data
         )
-        try:
-            auth_token = str(request_flow.cookies["auth_token"])
-        except KeyError as err:
+        if "auth_token" in request_flow.cookies.keys():
+            return str(request_flow.cookies["auth_token"])
+        if "LoginTwoFactorAuthChallenge" in request_flow.text:
+            self.flow_token = request_flow.json()["flow_token"]
+        else:
             raise RuntimeError(
                 "Error while while entering password:", request_flow.json()
-            ) from err
+            )
 
-        return auth_token
+        # 2FA
+        request_flow = self.session.post(
+            self.task_url, headers=self._headers, json=self._enter_2fa
+        )
+        if "auth_token" in request_flow.cookies.keys():
+            print("Success!")
+            return str(request_flow.cookies["auth_token"])
+        raise RuntimeError("Login failed after 2FA. Error message: ", request_flow.text)
 
     @property
     def _headers(self):
@@ -103,6 +112,24 @@ class Login:
                 "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
             ),
             "x-guest-token": self.guest_token,
+        }
+
+    @property
+    def _initial_params(self) -> dict:
+        return {
+            "input_flow_data": {
+                "flow_context": {
+                    "debug_overrides": {},
+                    "start_location": {"location": "splash_screen"},
+                }
+            },
+            "subtask_versions": {
+                "contacts_live_sync_permission_prompt": 0,
+                "email_verification": 1,
+                "topics_selector": 1,
+                "wait_spinner": 1,
+                "cta": 4,
+            },
         }
 
     @property
@@ -188,19 +215,17 @@ class Login:
         }
 
     @property
-    def _initial_params(self) -> dict:
+    def _enter_2fa(self) -> dict:
+        # assert self.flow_token[-1] == "6"
         return {
-            "input_flow_data": {
-                "flow_context": {
-                    "debug_overrides": {},
-                    "start_location": {"location": "splash_screen"},
+            "flow_token": self.flow_token,
+            "subtask_inputs": [
+                {
+                    "subtask_id": "LoginTwoFactorAuthChallenge",
+                    "enter_text": {
+                        "text": input("Enter 2FA code:\t"),
+                        "link": "next_link",
+                    },
                 }
-            },
-            "subtask_versions": {
-                "contacts_live_sync_permission_prompt": 0,
-                "email_verification": 1,
-                "topics_selector": 1,
-                "wait_spinner": 1,
-                "cta": 4,
-            },
+            ],
         }
