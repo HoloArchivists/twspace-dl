@@ -179,7 +179,7 @@ def twspace(args: argparse.Namespace) -> None:
     if args.url:
         print(twspace_dl.master_url)
     if args.write_url:
-        with open(args.write_url, "w", encoding="utf-8") as url_output:
+        with open(args.write_url, "a", encoding="utf-8") as url_output:
             url_output.write(twspace_dl.master_url)
     if args.write_playlist:
         twspace_dl.write_playlist()
