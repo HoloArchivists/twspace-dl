@@ -73,13 +73,13 @@ class Login:
         # account duplication check
         request_flow = self.session.post(
             self.task_url, headers=self._headers, json=self._account_dup_check_data
-        )
-        try:
-            self.flow_token = request_flow.json()["flow_token"]
-        except KeyError as err:
-            raise RuntimeError(
-                "Error while checking account duplication:", request_flow.json()
-            ) from err
+        ).json()
+        if "flow_token" in request_flow.keys():
+            self.flow_token = request_flow["flow_token"]
+            # Sometimes it doesn't check account duplication
+            # raise RuntimeError(
+            #     "Error while checking account duplication:", request_flow.json()
+            # ) from err
 
         # enter password
         request_flow = self.session.post(
