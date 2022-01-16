@@ -68,9 +68,11 @@ class Login:
         try:
             self.flow_token = request_flow.json()["flow_token"]
         except KeyError as err:
-            raise RuntimeError(
-                "Error while checking account duplication:", request_flow.json()
-            ) from err
+            pass
+            # Sometimes it doesn't check account duplication
+            # raise RuntimeError(
+            #     "Error while checking account duplication:", request_flow.json()
+            # ) from err
 
         # enter password
         request_flow = self.session.post(
