@@ -6,9 +6,18 @@ import requests
 
 def load_from_file(filename: str) -> str:
     """return auth_token from netscape cookie file"""
-    return re.findall(
-        r"(?<=auth_token\s)\w{40}", open(filename, "r", encoding="utf-8").read()
-    )[0]
+    try:
+        token = re.findall(
+            r"(?<=auth_token\s)\w{40}", open(filename, "r", encoding="utf-8").read()
+        )[0]
+    except IndexError as err:
+        raise ValueError(
+            (
+                "Cookie file does not have auth_token.\n"
+                "Please check if you were connected when creating it"
+            )
+        ) from err
+    return token
 
 
 def write_to_file(auth_token: str, filename: str) -> None:
