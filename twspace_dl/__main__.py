@@ -8,7 +8,7 @@ import sys
 
 from twspace_dl.twspace_dl import TwspaceDL
 from twspace_dl.twspace import Twspace
-from twspace_dl.login import Login, load_from_file, write_to_file
+from twspace_dl.login import Login, load_from_file, write_to_file, is_expired
 from twspace_dl.twitter import guest_token
 
 
@@ -131,13 +131,18 @@ def space(args: argparse.Namespace) -> None:
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
+    if has_login:
+        if args.input_cookie_file:
+            if args.username and args.password and is_expired(args.input_cookie_file):
+                auth_token = Login(args.username, args.password, guest_token()).login()
+                write_to_file(auth_token, args.output_cookie_file)
+            else:
+                auth_token = load_from_file(args.input_cookie_file)
+        else:
+            auth_token = Login(args.username, args.password, guest_token()).login()
+
     if args.user_url:
-        if has_login:
-            auth_token = (
-                load_from_file(args.input_cookie_file)
-                if args.input_cookie_file
-                else Login(args.username, args.password, guest_token()).login()
-            )
+        if auth_token:
             twspace = Twspace.from_user_avatar(args.user_url, auth_token)
         else:
             twspace = Twspace.from_user_tweets(args.user_url)

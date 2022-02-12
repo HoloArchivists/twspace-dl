@@ -1,7 +1,17 @@
 "Module providing login utilities for twspace_dl"
 import re
+from datetime import datetime
 
 import requests
+
+
+def is_expired(filename: str) -> bool:
+    """return whether a cookie is expired"""
+    timestamp = re.findall(
+        r"\d{10}(?=\sauth_token\s)", open(filename, "r", encoding="utf-8").read()
+    )[0]
+    date = datetime.fromtimestamp(float(timestamp))
+    return date < datetime.now()
 
 
 def load_from_file(filename: str) -> str:
@@ -28,6 +38,8 @@ def write_to_file(auth_token: str, filename: str) -> None:
 
 
 class Login:
+    """Helper class to login to twitter"""
+
     def __init__(self, username, password, guest_token):
         self.username = username
         self.password = password
@@ -37,6 +49,7 @@ class Login:
         self.flow_token: str
 
     def login(self) -> str:
+        """Login to twitter"""
         request_flow = self.session.post(
             self.task_url,
             params={"flow_name": "login"},
