@@ -7,40 +7,35 @@ import shutil
 import sys
 
 from twspace_dl.twspace_dl import TwspaceDL
+from twspace_dl.twspace import Twspace
 from twspace_dl.login import Login, load_from_file, write_to_file
+from twspace_dl.twitter import guest_token
 
 
 def main() -> None:
+    """Main function, creates the argument parser"""
     parser = argparse.ArgumentParser(
         description="Script designed to help download twitter spaces"
     )
-    subparsers = parser.add_subparsers(
-        help="(EXPERIMENTAL) Login to your account using username and password",
-    )
-    login_parser = subparsers.add_parser("login", description="EXPERIMENTAL")
+
     input_group = parser.add_argument_group("input")
     input_method = input_group.add_mutually_exclusive_group()
     output_group = parser.add_argument_group("output")
+    login_group = parser.add_argument_group("login")
 
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument("-s", "--skip-download", action="store_true")
     parser.add_argument("-k", "--keep-files", action="store_true")
     parser.add_argument("--input-cookie-file", type=str, metavar="COOKIE_FILE")
 
-    login_parser.add_argument(
-        "-u", "--username", type=str, metavar="USERNAME", default=None
-    )
-    login_parser.add_argument(
-        "-p", "--password", type=str, metavar="PASSWORD", default=None
-    )
-    login_parser.add_argument(
-        "-o",
+    login_group.add_argument("--username", type=str, metavar="USERNAME", default=None)
+    login_group.add_argument("--password", type=str, metavar="PASSWORD", default=None)
+    login_group.add_argument(
         "--output-cookie-file",
         type=str,
         metavar="OUTPUT_COOKIE_FILE",
         default=None,
     )
-    login_parser.set_defaults(func=login)
 
     input_method.add_argument("-i", "--input-url", type=str, metavar="SPACE_URL")
     input_method.add_argument("-U", "--user-url", type=str, metavar="USER_URL")
@@ -51,9 +46,10 @@ def main() -> None:
         metavar="DYN_URL",
         help=(
             "use the dynamic url for the processes(useful for ended spaces)\n"
-            "example: https://prod-fastly-ap-northeast-1.video.pscp.tv/Transcoding/v1/hls/"
-            "zUUpEgiM0M18jCGxo2eSZs99p49hfyFQr1l4cdze-Sp4T-DQOMMoZpkbdyetgfwscfvvUkAdeF-I5hPI4bGoYg/"
-            "non_transcode/ap-northeast-1/periscope-replay-direct-prod-ap-northeast-1-public/"
+            "example: https://prod-fastly-ap-northeast-1.video.pscp.tv/Transcoding/v1/"
+            "hls/zUUpEgiM0M18jCGxo2eSZs99p49hfyFQr1l4cdze-Sp4T-DQOMMoZpkbdyetgfwscfvvUk"
+            "AdeF-I5hPI4bGoYg/non_transcode/ap-northeast-1/"
+            "periscope-replay-direct-prod-ap-northeast-1-public/"
             "audio-space/dynamic_playlist.m3u8?type=live"
         ),
     )
@@ -64,9 +60,10 @@ def main() -> None:
         metavar="URL",
         help=(
             "use the master url for the processes(useful for ended spaces)\n"
-            "example: https://prod-fastly-ap-northeast-1.video.pscp.tv/Transcoding/v1/hls/"
-            "YRSsw6_P5xUZHMualK5-ihvePR6o4QmoZVOBGicKvmkL_KB9IQYtxVqm3P_vpZ2HnFkoRfar4_uJOjqC8OCo5A/"
-            "non_transcode/ap-northeast-1/periscope-replay-direct-prod-ap-northeast-1-public/"
+            "example: https://prod-fastly-ap-northeast-1.video.pscp.tv/Transcoding/v1/"
+            "hls/YRSsw6_P5xUZHMualK5-ihvePR6o4QmoZVOBGicKvmkL_KB9IQYtxVqm3P_"
+            "vpZ2HnFkoRfar4_uJOjqC8OCo5A/non_transcode/ap-northeast-1/"
+            "periscope-replay-direct-prod-ap-northeast-1-public/"
             "audio-space/master_playlist.m3u8"
         ),
     )
@@ -108,7 +105,7 @@ def main() -> None:
     output_group.add_argument(
         "--write-url", type=str, metavar="URL_OUTPUT", help="write master url to file"
     )
-    parser.set_defaults(func=twspace)
+    parser.set_defaults(func=space)
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
@@ -116,55 +113,39 @@ def main() -> None:
     args.func(args)
 
 
-def login(args: argparse.Namespace) -> None:
-    has_partial_login = (
-        args.username or args.password or args.output_cookie_file  # has at least one
-    ) and not (
-        args.username and args.password and args.output_cookie_file  # has both
-    )  # has one but not both
-
-    if has_partial_login:
-        print("login needs both username, password, and output file")
-        sys.exit(2)
-
-    if args.username and args.password and args.output_cookie_file:
-        login = Login(args.username, args.password, TwspaceDL.guest_token())
-        auth_token = login.login()
-        write_to_file(auth_token, args.output_cookie_file)
-
-
-def twspace(args: argparse.Namespace) -> None:
+def space(args: argparse.Namespace) -> None:
+    """Manage the twitter space related function"""
     has_input = (
-        args.input_url
+        args.user_url
+        or args.input_url
         or args.input_metadata
-        or args.user_url
-        or args.from_master_url
         or args.from_dynamic_url
+        or args.from_master_url
     )
-
+    has_login = (args.username and args.password) or args.input_cookie_file
     if not has_input:
-        print("Either space url, user url or master url should be provided")
+        print(
+            "Either user url, space url, dynamic url or master url should be provided"
+        )
         sys.exit(2)
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
     if args.user_url:
-        if args.input_cookie_file:
-            auth_token = load_from_file(args.input_cookie_file)
-            twspace_dl = TwspaceDL.from_user_avatar(
-                args.user_url, args.output, auth_token
+        if has_login:
+            auth_token = (
+                load_from_file(args.input_cookie_file)
+                if args.input_cookie_file
+                else Login(args.username, args.password, guest_token()).login()
             )
+            twspace = Twspace.from_user_avatar(args.user_url, auth_token)
         else:
-            twspace_dl = TwspaceDL.from_user_tweets(args.user_url, args.output)
+            twspace = Twspace.from_user_tweets(args.user_url)
     elif args.input_metadata:
-        with open(args.input_metadata, "r", encoding="utf-8") as metadata_io:
-            metadata = json.load(metadata_io)
-        twspace_dl = TwspaceDL(
-            metadata["data"]["audioSpace"]["metadata"]["rest_id"], args.output
-        )
-        twspace_dl.metadata = metadata
+        twspace = Twspace.from_file(args.input_metadata)
     else:
-        twspace_dl = TwspaceDL.from_space_url(args.input_url, args.output)
+        twspace = Twspace.from_space_url(args.input_url)
+    twspace_dl = TwspaceDL(twspace, args.output)
 
     if args.from_dynamic_url:
         twspace_dl.dyn_url = args.from_dynamic_url
@@ -172,7 +153,7 @@ def twspace(args: argparse.Namespace) -> None:
         twspace_dl.master_url = args.from_master_url
 
     if args.write_metadata:
-        metadata = json.dumps(twspace_dl.metadata, indent=4)
+        metadata = json.dumps(twspace.source, indent=4)
         filename = twspace_dl.filename
         with open(f"{filename}.json", "w", encoding="utf-8") as metadata_io:
             metadata_io.write(metadata)

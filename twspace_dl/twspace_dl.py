@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import re
@@ -11,208 +10,31 @@ from urllib.parse import urlparse
 
 import requests
 
-from .format_info import FormatInfo
+from .twspace import Twspace
+
+DEFAULT_FNAME_FORMAT = "(%(creator_name)s)%(title)s-%(id)s"
 
 
 class TwspaceDL:
     """Downloader class for twitter spaces"""
 
-    def __init__(self, space_id: str, format_str: str) -> None:
-        self.id = space_id
-        self.format_str = format_str or FormatInfo.DEFAULT_FNAME_FORMAT
+    def __init__(self, space: Twspace, format_str: str) -> None:
+        self.space = space
+        self.format_str = format_str or DEFAULT_FNAME_FORMAT
         self.session = requests.Session()
         self._tmpdir: str
 
-    @classmethod
-    def from_space_url(cls, url: str, format_str: str):
-        """Create a TwspaceDL object from a space url"""
-        if not url:
-            logging.warning("No space url given, file won't have any metadata")
-            space_id = "no_id"
-            format_str = "no_info"
-        else:
-            try:
-                space_id = re.findall(r"(?<=spaces/)\w*", url)[0]
-            except IndexError as err:
-                raise ValueError("Input URL is not valid") from err
-        return cls(space_id, format_str)
-
-    @classmethod
-    def from_user_tweets(cls, url: str, format_str: str):
-        """Create a TwspaceDL object from the first space
-        found in the 20 last user tweets"""
-        user_id = TwspaceDL.user_id(url)
-        headers = {
-            "authorization": (
-                "Bearer "
-                "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
-                "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
-            ),
-            "x-guest-token": TwspaceDL.guest_token(),
-        }
-        params = {
-            "variables": (
-                "{"
-                f'"userId":"{user_id}",'
-                '"count":20,'
-                '"withTweetQuoteCount":true,'
-                '"includePromotedContent":true,'
-                '"withQuickPromoteEligibilityTweetFields":false,'
-                '"withSuperFollowsUserFields":true,'
-                '"withUserResults":true,'
-                '"withNftAvatar":false,'
-                '"withBirdwatchPivots":false,'
-                '"withReactionsMetadata":false,'
-                '"withReactionsPerspective":false,'
-                '"withSuperFollowsTweetFields":true,'
-                '"withVoice":true}'
-            )
-        }
-        response = requests.get(
-            "https://twitter.com/i/api/graphql/jpCmlX6UgnPEZJknGKbmZA/UserTweets",
-            params=params,
-            headers=headers,
-        )
-        tweets = response.text
-
-        try:
-            space_id = re.findall(r"(?<=https://twitter.com/i/spaces/)\w*", tweets)[0]
-        except (IndexError, json.JSONDecodeError) as err:
-            raise RuntimeError("User is not live") from err
-        return cls(space_id, format_str)
-
-    @classmethod
-    def from_user_avatar(cls, user_url, format_str, auth_token):
-        """Create a TwspaceDL object from a twitter user ongoing space"""
-        headers = {
-            "authorization": (
-                "Bearer "
-                "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
-                "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
-            ),
-            "cookie": f"auth_token={auth_token};",
-        }
-        user_id = TwspaceDL.user_id(user_url)
-        params = {"user_ids": user_id, "only_spaces": "true"}
-        avatar_content = requests.get(
-            f"https://twitter.com/i/api/fleets/v1/avatar_content",
-            params=params,
-            headers=headers,
-        ).json()
-
-        broadcast_id = avatar_content["users"][user_id]["spaces"]["live_content"][
-            "audiospace"
-        ]["broadcast_id"]
-        return cls(broadcast_id, format_str)
-
-    @staticmethod
-    def user_id(user_url: str) -> str:
-        """Get the id of a twitter using the url linking to their account"""
-        screen_name = re.findall(r"(?<=twitter.com/)\w*", user_url)[0]
-
-        params = {
-            "variables": (
-                "{"
-                f'"screen_name":"{screen_name}",'
-                '"withSafetyModeUserFields":true,'
-                '"withSuperFollowsUserFields":true,'
-                '"withNftAvatar":false'
-                "}"
-            )
-        }
-        headers = {
-            "authorization": (
-                "Bearer "
-                "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
-                "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
-            ),
-            "x-guest-token": TwspaceDL.guest_token(),
-        }
-        response = requests.get(
-            "https://twitter.com/i/api/graphql/1CL-tn62bpc-zqeQrWm4Kw/UserByScreenName",
-            headers=headers,
-            params=params,
-        )
-        user_data = response.json()
-        user_id = user_data["data"]["user"]["result"]["rest_id"]
-        return user_id
-
-    @staticmethod
-    def guest_token() -> str:
-        """Generate a guest token to authorize twitter api requests"""
-        headers = {
-            "authorization": (
-                "Bearer "
-                "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
-                "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
-            )
-        }
-        response = requests.post(
-            "https://api.twitter.com/1.1/guest/activate.json", headers=headers
-        ).json()
-        guest_token = response["guest_token"]
-        if not guest_token:
-            raise RuntimeError("No guest token found after five retry")
-        logging.debug(guest_token)
-        return guest_token
-
-    @cached_property
-    def metadata(self) -> dict:
-        """Get space metadata"""
-        params = {
-            "variables": (
-                "{"
-                f'"id":"{self.id}",'
-                '"isMetatagsQuery":false,'
-                '"withSuperFollowsUserFields":true,'
-                '"withUserResults":true,'
-                '"withBirdwatchPivots":false,'
-                '"withReactionsMetadata":false,'
-                '"withReactionsPerspective":false,'
-                '"withSuperFollowsTweetFields":true,'
-                '"withReplays":true,'
-                '"withScheduledSpaces":true'
-                "}"
-            )
-        }
-        headers = {
-            "authorization": (
-                "Bearer "
-                "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
-                "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
-            ),
-            "x-guest-token": self.guest_token(),
-        }
-        response = requests.get(
-            "https://twitter.com/i/api/graphql/jyQ0_DEMZHeoluCgHJ-U5Q/AudioSpaceById",
-            params=params,
-            headers=headers,
-        )
-        metadata = response.json()
-        try:
-            media_key = metadata["data"]["audioSpace"]["metadata"]["media_key"]
-            logging.debug(media_key)
-        except KeyError as error:
-            logging.error(metadata)
-            raise RuntimeError(metadata) from error
-        return metadata
-
     @cached_property
     def filename(self) -> str:
-        format_info = FormatInfo()
-        format_info.set_info(self.metadata)
-        filename = format_info.format(self.format_str)
+        """Returns the formatted filename"""
+        filename = self.space.format(self.format_str)
         return filename
 
     @cached_property
     def dyn_url(self) -> str:
-        metadata = self.metadata
-        if (
-            metadata["data"]["audioSpace"]["metadata"]["state"] == "Ended"
-            and not metadata["data"]["audioSpace"]["metadata"][
-                "is_space_available_for_replay"
-            ]
-        ):
+        """Returns the dynamic url i.e. the url used by the browser"""
+        space = self.space
+        if space["state"] == "Ended" and not space["available_for_replay"]:
             logging.error(
                 (
                     "Can't Download. Space has ended, can't retrieve master url. "
@@ -228,7 +50,7 @@ class TwspaceDL:
             ),
             "cookie": "auth_token=",
         }
-        media_key = metadata["data"]["audioSpace"]["metadata"]["media_key"]
+        media_key = space["media_key"]
         response = requests.get(
             "https://twitter.com/i/api/1.1/live_video_stream/status/" + media_key,
             headers=headers,
@@ -236,7 +58,7 @@ class TwspaceDL:
         try:
             metadata = response.json()
         except Exception as err:
-            raise RuntimeError("Space isn't available") from err
+            raise RuntimeError("Space isn't available", space.source) from err
         dyn_url = metadata["source"]["location"]
         return dyn_url
 
@@ -261,7 +83,7 @@ class TwspaceDL:
     def playlist_text(self) -> str:
         """Modify the chunks URL using the master one to be able to download"""
         playlist_text = requests.get(self.playlist_url).text
-        master_url_wo_file = re.sub("master_playlist\.m3u8.*", "", self.master_url)
+        master_url_wo_file = re.sub(r"master_playlist\.m3u8.*", "", self.master_url)
         playlist_text = re.sub(r"(?=chunk)", master_url_wo_file, playlist_text)
         return playlist_text
 
@@ -277,12 +99,10 @@ class TwspaceDL:
         """Download a twitter space"""
         if not shutil.which("ffmpeg"):
             raise FileNotFoundError("ffmpeg not installed")
-        metadata = self.metadata
+        space = self.space
         tempdir = self._tmpdir = tempfile.mkdtemp(dir=".")
         self.write_playlist(save_dir=tempdir)
-        format_info = FormatInfo()
-        format_info.set_info(metadata)
-        state = metadata["data"]["audioSpace"]["metadata"]["state"]
+        state = space["state"]
 
         cmd_base = [
             "ffmpeg",
@@ -294,11 +114,11 @@ class TwspaceDL:
             "-c",
             "copy",
             "-metadata",
-            f"title={format_info['title']}",
+            f"title={space['title']}",
             "-metadata",
-            f"author={format_info['creator_name']}",
+            f"author={space['creator_name']}",
             "-metadata",
-            f"episode_id={self.id}",
+            f"episode_id={space['id']}",
         ]
 
         filename = os.path.basename(self.filename)
