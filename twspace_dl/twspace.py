@@ -227,9 +227,12 @@ class Twspace(dict):
             headers=headers,
         ).json()
 
-        broadcast_id = avatar_content["users"][user_id]["spaces"]["live_content"][
-            "audiospace"
-        ]["broadcast_id"]
+        try:
+            broadcast_id = avatar_content["users"][user_id]["spaces"]["live_content"][
+                "audiospace"
+            ]["broadcast_id"]
+        except KeyError as err:
+            raise ValueError("User is not live") from err
         return cls(cls._metadata(broadcast_id))
 
     @classmethod

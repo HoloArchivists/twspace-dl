@@ -1,6 +1,6 @@
 "Module providing login utilities for twspace_dl"
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import requests
 
@@ -32,9 +32,13 @@ def load_from_file(filename: str) -> str:
 
 def write_to_file(auth_token: str, filename: str) -> None:
     """Write cookie to file in a format recognizable by the module
-    (`auth_token        {auth_token}`)"""
+    (`{timestamp}\tauth_token\t{auth_token}`)"""
+    # Taken from twitter's set-cookie parameter(13 months)
+    delta = timedelta(seconds=34214400)
+    expiry_date = datetime.now() + delta
+    timestamp = int(expiry_date.timestamp())
     with open(filename, "w", encoding="utf-8") as cookie_file:
-        cookie_file.write("auth_token" + 8 * " " + auth_token)
+        cookie_file.write(f"{timestamp}\tauth_token\t{auth_token}")
 
 
 class Login:
@@ -83,6 +87,33 @@ class Login:
         except KeyError as err:
             raise RuntimeError("Error identifying user:", request_flow.json()) from err
 
+        # alternate identifier
+        request_flow = self.session.post(
+            self.task_url, headers=self._headers, json=self._login_alternate_identifier
+        ).json()
+        if "flow_token" in request_flow.keys():
+            self.flow_token = request_flow["flow_token"]
+            # Sometimes it doesn't check for alternate id
+            # raise RuntimeError(
+            #     "Error while checking for alternate id", request_flow.json()
+            # ) from err
+
+        # enter password
+        request_flow = self.session.post(
+            self.task_url, headers=self._headers, json=self._enter_password_data
+        )
+        if "auth_token" in request_flow.cookies.keys():
+            return str(request_flow.cookies["auth_token"])
+        if (
+            "LoginTwoFactorAuthChallenge" in request_flow.text
+            or "AccountDuplicationCheck" in request_flow.text
+        ):
+            self.flow_token = request_flow.json()["flow_token"]
+        else:
+            raise RuntimeError(
+                "Error while while entering password:", request_flow.json()
+            )
+
         # account duplication check
         request_flow = self.session.post(
             self.task_url, headers=self._headers, json=self._account_dup_check_data
@@ -93,19 +124,6 @@ class Login:
             # raise RuntimeError(
             #     "Error while checking account duplication:", request_flow.json()
             # ) from err
-
-        # enter password
-        request_flow = self.session.post(
-            self.task_url, headers=self._headers, json=self._enter_password_data
-        )
-        if "auth_token" in request_flow.cookies.keys():
-            return str(request_flow.cookies["auth_token"])
-        if "LoginTwoFactorAuthChallenge" in request_flow.text:
-            self.flow_token = request_flow.json()["flow_token"]
-        else:
-            raise RuntimeError(
-                "Error while while entering password:", request_flow.json()
-            )
 
         # 2FA
         request_flow = self.session.post(
@@ -195,6 +213,18 @@ class Login:
                         ],
                         "link": "next_link",
                     },
+                }
+            ],
+        }
+
+    @property
+    def _login_alternate_identifier(self) -> dict:
+        return {
+            "flow_token": self.flow_token,
+            "subtask_inputs": [
+                {
+                    "subtask_id": "LoginEnterAlternateIdentifierSubtask",
+                    "enter_text": {"text": self.username, "link": "next_link"},
                 }
             ],
         }
