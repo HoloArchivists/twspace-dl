@@ -118,6 +118,8 @@ class Login:
         request_flow = self.session.post(
             self.task_url, headers=self._headers, json=self._account_dup_check_data
         ).json()
+        if "auth_token" in request_flow.cookies.keys():
+            return str(request_flow.cookies["auth_token"])
         if "flow_token" in request_flow.keys():
             self.flow_token = request_flow["flow_token"]
             # Sometimes it doesn't check account duplication
