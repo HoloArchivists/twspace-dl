@@ -131,6 +131,7 @@ def space(args: argparse.Namespace) -> None:
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
+    auth_token = ""
     if has_login:
         if args.input_cookie_file:
             if args.username and args.password and is_expired(args.input_cookie_file):
