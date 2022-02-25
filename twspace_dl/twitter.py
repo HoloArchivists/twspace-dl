@@ -23,30 +23,11 @@ def guest_token() -> str:
 def user_id(user_url: str) -> str:
     """Get the id of a twitter using the url linking to their account"""
     screen_name = re.findall(r"(?<=twitter.com/)\w*", user_url)[0]
-
-    params = {
-        "variables": (
-            "{"
-            f'"screen_name":"{screen_name}",'
-            '"withSafetyModeUserFields":true,'
-            '"withSuperFollowsUserFields":true,'
-            '"withNftAvatar":false'
-            "}"
-        )
-    }
-    headers = {
-        "authorization": (
-            "Bearer "
-            "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
-            "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
-        ),
-        "x-guest-token": guest_token(),
-    }
+    params = {"screen_names": screen_name}
     response = requests.get(
-        "https://twitter.com/i/api/graphql/1CL-tn62bpc-zqeQrWm4Kw/UserByScreenName",
-        headers=headers,
+        "https://cdn.syndication.twimg.com/widgets/followbutton/info.json",
         params=params,
     )
     user_data = response.json()
-    usr_id = user_data["data"]["user"]["result"]["rest_id"]
+    usr_id = user_data[0]["id"]
     return usr_id
