@@ -116,7 +116,7 @@ class TwspaceDL:
             "-metadata",
             f"title={space['title']}",
             "-metadata",
-            f"author={space['creator_name']}",
+            f"artist={space['creator_name']}",
             "-metadata",
             f"episode_id={space['id']}",
         ]
