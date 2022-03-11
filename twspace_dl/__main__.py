@@ -6,6 +6,7 @@ import logging
 import os
 import shutil
 import sys
+from typing import Iterable
 
 from twspace_dl.twspace_dl import TwspaceDL
 from twspace_dl.twspace import Twspace
@@ -132,13 +133,15 @@ def space(args: argparse.Namespace) -> None:
         sys.exit(2)
 
     if args.log:
-        log_filename = datetime.datetime.now().strftime('.twspace-dl.%Y-%m-%d_%H-%M-%S_%s.log')
+        log_filename = datetime.datetime.now().strftime(
+            ".twspace-dl.%Y-%m-%d_%H-%M-%S_%s.log"
+        )
         handlers = [
             logging.FileHandler(log_filename),
-            logging.StreamHandler()
-        ]
+            logging.StreamHandler(),
+        ]  # type: Iterable[logging.Handler] | None
     else:
-        handlers = []
+        handlers = None
 
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
