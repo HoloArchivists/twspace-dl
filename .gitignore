@@ -2,7 +2,8 @@
 *.m3u8
 *.m4a
 *.json
-tmp
+*.log
+tmp*
 __pycache__
 .python-version
 cookies.txt
