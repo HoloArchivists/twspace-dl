@@ -37,9 +37,7 @@ pip install twspace-dl
 ### From source
 
 ```bash
-git clone --depth 1 https://github.com/Ryu1845/twspace-dl
-cd twspace-dl
-pip install .
+pip install git+https://github.com/Ryu1845/twspace-dl
 ```
 
 ## Usage
