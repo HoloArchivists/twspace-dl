@@ -12,6 +12,74 @@ from twspace_dl.twspace import Twspace
 from twspace_dl.twspace_dl import TwspaceDL
 
 
+def space(args: argparse.Namespace) -> None:
+    """Manage the twitter space related function"""
+    has_input = (
+        args.user_url
+        or args.input_url
+        or args.input_metadata
+        or args.from_dynamic_url
+        or args.from_master_url
+    )
+    has_login = (args.username and args.password) or args.input_cookie_file
+    if not has_input:
+        print(
+            "Either user url, space url, dynamic url or master url should be provided"
+        )
+        sys.exit(2)
+
+    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
+
+    auth_token = ""
+    if has_login:
+        if args.input_cookie_file:
+            if args.username and args.password and is_expired(args.input_cookie_file):
+                auth_token = Login(args.username, args.password, guest_token()).login()
+                write_to_file(auth_token, args.output_cookie_file)
+            else:
+                auth_token = load_from_file(args.input_cookie_file)
+        else:
+            auth_token = Login(args.username, args.password, guest_token()).login()
+
+    if args.user_url:
+        if auth_token:
+            twspace = Twspace.from_user_avatar(args.user_url, auth_token)
+        else:
+            twspace = Twspace.from_user_tweets(args.user_url)
+    elif args.input_metadata:
+        twspace = Twspace.from_file(args.input_metadata)
+    else:
+        twspace = Twspace.from_space_url(args.input_url)
+    twspace_dl = TwspaceDL(twspace, args.output)
+
+    if args.from_dynamic_url:
+        twspace_dl.dyn_url = args.from_dynamic_url
+    if args.from_master_url:
+        twspace_dl.master_url = args.from_master_url
+
+    if args.write_metadata:
+        metadata = json.dumps(twspace.source, indent=4)
+        filename = twspace_dl.filename
+        with open(f"{filename}.json", "w", encoding="utf-8") as metadata_io:
+            metadata_io.write(metadata)
+    if args.url:
+        print(twspace_dl.master_url)
+    if args.write_url:
+        with open(args.write_url, "a", encoding="utf-8") as url_output:
+            url_output.write(twspace_dl.master_url)
+    if args.write_playlist:
+        twspace_dl.write_playlist()
+
+    if not args.skip_download:
+        try:
+            twspace_dl.download()
+        except KeyboardInterrupt:
+            logging.info("Download Interrupted")
+        finally:
+            if not args.keep_files and os.path.exists(twspace_dl._tmpdir):
+                shutil.rmtree(twspace_dl._tmpdir)
+
+
 def main() -> None:
     """Main function, creates the argument parser"""
     parser = argparse.ArgumentParser(
@@ -111,74 +179,6 @@ def main() -> None:
         sys.exit(1)
     args = parser.parse_args()
     args.func(args)
-
-
-def space(args: argparse.Namespace) -> None:
-    """Manage the twitter space related function"""
-    has_input = (
-        args.user_url
-        or args.input_url
-        or args.input_metadata
-        or args.from_dynamic_url
-        or args.from_master_url
-    )
-    has_login = (args.username and args.password) or args.input_cookie_file
-    if not has_input:
-        print(
-            "Either user url, space url, dynamic url or master url should be provided"
-        )
-        sys.exit(2)
-
-    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
-
-    auth_token = ""
-    if has_login:
-        if args.input_cookie_file:
-            if args.username and args.password and is_expired(args.input_cookie_file):
-                auth_token = Login(args.username, args.password, guest_token()).login()
-                write_to_file(auth_token, args.output_cookie_file)
-            else:
-                auth_token = load_from_file(args.input_cookie_file)
-        else:
-            auth_token = Login(args.username, args.password, guest_token()).login()
-
-    if args.user_url:
-        if auth_token:
-            twspace = Twspace.from_user_avatar(args.user_url, auth_token)
-        else:
-            twspace = Twspace.from_user_tweets(args.user_url)
-    elif args.input_metadata:
-        twspace = Twspace.from_file(args.input_metadata)
-    else:
-        twspace = Twspace.from_space_url(args.input_url)
-    twspace_dl = TwspaceDL(twspace, args.output)
-
-    if args.from_dynamic_url:
-        twspace_dl.dyn_url = args.from_dynamic_url
-    if args.from_master_url:
-        twspace_dl.master_url = args.from_master_url
-
-    if args.write_metadata:
-        metadata = json.dumps(twspace.source, indent=4)
-        filename = twspace_dl.filename
-        with open(f"{filename}.json", "w", encoding="utf-8") as metadata_io:
-            metadata_io.write(metadata)
-    if args.url:
-        print(twspace_dl.master_url)
-    if args.write_url:
-        with open(args.write_url, "a", encoding="utf-8") as url_output:
-            url_output.write(twspace_dl.master_url)
-    if args.write_playlist:
-        twspace_dl.write_playlist()
-
-    if not args.skip_download:
-        try:
-            twspace_dl.download()
-        except KeyboardInterrupt:
-            logging.info("Download Interrupted")
-        finally:
-            if not args.keep_files and os.path.exists(twspace_dl._tmpdir):
-                shutil.rmtree(twspace_dl._tmpdir)
 
 
 if __name__ == "__main__":
