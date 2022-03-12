@@ -1,3 +1,7 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
 [tool.poetry]
 name = "twspace-dl"
 version = "2022.3.12.1"
@@ -17,7 +21,6 @@ python = "^3.8"
 requests = "^2.26.0"
 types-requests = "^2.27.11"
 
-
 [tool.poetry.scripts]
 twspace_dl = "twspace_dl.__main__:main"
 
@@ -26,12 +29,6 @@ pytest = "^6.2.5"
 black = "^22.1.0"
 mypy = "^0.940"
 isort = "^5.10.1"
-flake8 = "^4.0.1"
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-
 
 [tool.bumpver]
 current_version = "2022.3.12.1"
@@ -47,8 +44,16 @@ push = true
     # 'current_version = "{version}"',
 ]
 
+[tool.black]
+line-length = 89
+target-version = ['py38']
+
 [tool.mypy]
 python_version = 3.8
 show_error_codes = true
 pretty = true
 strict = true
+
+[tool.isort]
+py_version=38
+line_length = 89
