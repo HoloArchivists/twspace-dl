@@ -1,9 +1,9 @@
 "Module providing login utilities for twspace_dl"
 import re
 from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
 
 import requests
-from typing import Optional, Dict, Any
 
 
 def is_expired(filename: str) -> bool:

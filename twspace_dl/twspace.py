@@ -5,13 +5,12 @@ import os
 import re
 from collections import defaultdict
 from datetime import datetime
-from argon2 import Type
+from typing import Any, Dict
 
 import requests
+from argon2 import Type
 
 from . import twitter
-
-from typing import Dict, Any
 
 
 class Twspace(Dict[str, Any]):
