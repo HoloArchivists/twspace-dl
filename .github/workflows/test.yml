@@ -1,4 +1,4 @@
-name: Lint
+name: Lint and test
 
 on:
   push:
@@ -38,3 +38,6 @@ jobs:
     - name: Analysing the code with isort
       run: |
         poetry run isort .
+    - name: Analysing the code with pytest
+      run: |
+        poetry run pytest
