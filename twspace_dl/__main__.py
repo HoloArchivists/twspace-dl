@@ -30,7 +30,22 @@ def space(args: argparse.Namespace) -> None:
         )
         sys.exit(2)
 
-    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
+    if args.log:
+        log_filename = datetime.datetime.now().strftime(
+            ".twspace-dl.%Y-%m-%d_%H-%M-%S_%s.log"
+        )
+        handlers = [
+            logging.FileHandler(log_filename),
+            logging.StreamHandler(),
+        ]  # type: Iterable[logging.Handler] | None
+    else:
+        handlers = None
+
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        handlers=handlers,
+    )
 
     auth_token = ""
     if has_login:
