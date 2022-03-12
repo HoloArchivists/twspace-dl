@@ -15,8 +15,8 @@ def guest_token() -> str:
     response = requests.post(
         "https://api.twitter.com/1.1/guest/activate.json", headers=headers
     ).json()
-    token = response["guest_token"]
-    if not token:
+    token = response.get("guest_token")
+    if not isinstance(token, str):
         raise RuntimeError("No guest token found after five retry")
     return token
 
@@ -30,5 +30,11 @@ def user_id(user_url: str) -> str:
         params=params,
     )
     user_data = response.json()
-    usr_id = user_data[0]["id"]
-    return usr_id
+    if (
+        not isinstance(user_data, list)
+        or len(user_data) == 0
+        or "id" not in user_data[0]
+    ):
+        raise RuntimeError("No user id found in response")
+    user_id = user_data[0]["id"]
+    return str(user_id)

@@ -56,10 +56,10 @@ class TwspaceDL:
         )
         try:
             metadata = response.json()
+            dyn_url = metadata["source"]["location"]
         except Exception as err:
             raise RuntimeError("Space isn't available", space.source) from err
-        dyn_url = metadata["source"]["location"]
-        return dyn_url
+        return str(dyn_url)
 
     @cached_property
     def master_url(self) -> str:

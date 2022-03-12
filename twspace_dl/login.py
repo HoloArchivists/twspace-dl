@@ -3,6 +3,7 @@ import re
 from datetime import datetime, timedelta
 
 import requests
+from typing import Optional, Dict, Any
 
 
 def is_expired(filename: str) -> bool:
@@ -16,18 +17,18 @@ def is_expired(filename: str) -> bool:
 
 def load_from_file(filename: str) -> str:
     """return auth_token from netscape cookie file"""
-    try:
-        token = re.findall(
-            r"(?<=auth_token\s)\w{40}", open(filename, "r", encoding="utf-8").read()
-        )[0]
-    except IndexError as err:
+    token = re.findall(
+        r"(?<=auth_token\s)\w{40}", open(filename, "r", encoding="utf-8").read()
+    )
+    if len(token) > 0:
+        return str(token[0])
+    else:
         raise ValueError(
             (
                 "Cookie file does not have auth_token.\n"
                 "Please check if you were connected when creating it"
             )
-        ) from err
-    return token
+        )
 
 
 def write_to_file(auth_token: str, filename: str) -> None:
@@ -44,16 +45,16 @@ def write_to_file(auth_token: str, filename: str) -> None:
 class Login:
     """Helper class to login to twitter"""
 
-    def __init__(self, username, password, guest_token):
+    def __init__(self, username: str, password: str, guest_token: str) -> None:
         self.username = username
         self.password = password
         self.guest_token = guest_token
         self.session = requests.Session()
-        self.task_url = "https://twitter.com/i/api/1.1/onboarding/task.json"
-        self.flow_token: str
+        self.task_url: str = "https://twitter.com/i/api/1.1/onboarding/task.json"
+        self.flow_token: Optional[str] = None
 
     @property
-    def _headers(self):
+    def _headers(self) -> Dict[str, Any]:
         return {
             "authorization": (
                 "Bearer "
@@ -64,7 +65,7 @@ class Login:
         }
 
     @property
-    def _initial_params(self) -> dict:
+    def _initial_params(self) -> Dict[str, Any]:
         return {
             "input_flow_data": {
                 "flow_context": {
@@ -82,7 +83,7 @@ class Login:
         }
 
     @property
-    def _js_instrumentation_data(self) -> dict:
+    def _js_instrumentation_data(self) -> Dict[str, Any]:
         return {
             "flow_token": self.flow_token,
             "subtask_inputs": [
@@ -113,7 +114,7 @@ class Login:
         }
 
     @property
-    def _user_identifier_sso_data(self) -> dict:
+    def _user_identifier_sso_data(self) -> Dict[str, Any]:
         # assert self.flow_token[-1] == "1"
         return {
             "flow_token": self.flow_token,
@@ -136,7 +137,7 @@ class Login:
         }
 
     @property
-    def _login_alternate_identifier(self) -> dict:
+    def _login_alternate_identifier(self) -> Dict[str, Any]:
         return {
             "flow_token": self.flow_token,
             "subtask_inputs": [
@@ -148,7 +149,7 @@ class Login:
         }
 
     @property
-    def _account_dup_check_data(self) -> dict:
+    def _account_dup_check_data(self) -> Dict[str, Any]:
         # assert self.flow_token[-1] == "2"
         return {
             "flow_token": self.flow_token,
@@ -163,7 +164,7 @@ class Login:
         }
 
     @property
-    def _enter_password_data(self) -> dict:
+    def _enter_password_data(self) -> Dict[str, Any]:
         # assert self.flow_token[-1] == "6"
         return {
             "flow_token": self.flow_token,
@@ -176,7 +177,7 @@ class Login:
         }
 
     @property
-    def _enter_2fa(self) -> dict:
+    def _enter_2fa(self) -> Dict[str, Any]:
         # assert self.flow_token[-1] == "6"
         return {
             "flow_token": self.flow_token,
@@ -230,7 +231,7 @@ class Login:
         request_flow = self.session.post(
             self.task_url, headers=self._headers, json=self._login_alternate_identifier
         ).json()
-        if "flow_token" in request_flow.keys():
+        if isinstance(request_flow, dict) and "flow_token" in request_flow.keys():
             self.flow_token = request_flow["flow_token"]
             # Sometimes it doesn't check for alternate id
             # raise RuntimeError(
@@ -241,7 +242,8 @@ class Login:
         request_flow = self.session.post(
             self.task_url, headers=self._headers, json=self._enter_password_data
         )
-        if "auth_token" in request_flow.cookies.keys():
+        # RequestsCookieJar.keys is untyped in types-requests
+        if "auth_token" in request_flow.cookies.keys():  # type: ignore[no-untyped-call]
             return str(request_flow.cookies["auth_token"])
         if (
             "LoginTwoFactorAuthChallenge" in request_flow.text
@@ -257,9 +259,10 @@ class Login:
         request_flow = self.session.post(
             self.task_url, headers=self._headers, json=self._account_dup_check_data
         ).json()
-        if "auth_token" in request_flow.cookies.keys():
+        # RequestsCookieJar.keys is untyped in types-requests
+        if isinstance(request_flow, dict) and "auth_token" in request_flow.cookies.keys():  # type: ignore[no-untyped-call]
             return str(request_flow.cookies["auth_token"])
-        if "flow_token" in request_flow.keys():
+        if isinstance(request_flow, dict) and "flow_token" in request_flow.keys():
             self.flow_token = request_flow["flow_token"]
             # Sometimes it doesn't check account duplication
             # raise RuntimeError(
@@ -270,7 +273,8 @@ class Login:
         request_flow = self.session.post(
             self.task_url, headers=self._headers, json=self._enter_2fa
         )
-        if "auth_token" in request_flow.cookies.keys():
+        # RequestsCookieJar.keys is untyped in types-requests
+        if "auth_token" in request_flow.cookies.keys():  # type: ignore[no-untyped-call]
             print("Success!")
             return str(request_flow.cookies["auth_token"])
         raise RuntimeError("Login failed after 2FA. Error message: ", request_flow.text)

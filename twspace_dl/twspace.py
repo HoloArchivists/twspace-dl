@@ -5,16 +5,19 @@ import os
 import re
 from collections import defaultdict
 from datetime import datetime
+from argon2 import Type
 
 import requests
 
 from . import twitter
 
+from typing import Dict, Any
 
-class Twspace(dict):
+
+class Twspace(Dict[str, Any]):
     """Downloader class for twitter spaces"""
 
-    def __init__(self, metadata: dict) -> None:
+    def __init__(self, metadata: Dict[str, Any]) -> None:
         dict.__init__(
             self,
             {
@@ -31,15 +34,15 @@ class Twspace(dict):
         )
 
         root = defaultdict(str, metadata["data"]["audioSpace"]["metadata"])
-        creator_info = root["creator_results"]["result"]["legacy"]  # type: ignore
+        creator_info = root["creator_results"]["result"]["legacy"]
 
         self.source = metadata
         self.root = root
         self["id"] = root["rest_id"]
         self["url"] = "https://twitter.com/i/spaces/" + self["id"]
         self["title"] = root["title"]
-        self["creator_name"] = creator_info["name"]  # type: ignore
-        self["creator_screen_name"] = creator_info["screen_name"]  # type: ignore
+        self["creator_name"] = creator_info["name"]
+        self["creator_screen_name"] = creator_info["screen_name"]
         try:
             self["start_date"] = datetime.fromtimestamp(
                 int(root["started_at"]) / 1000
@@ -56,7 +59,7 @@ class Twspace(dict):
         self["media_key"] = root["media_key"]
 
     @staticmethod
-    def _metadata(space_id) -> dict:
+    def _metadata(space_id: str) -> Dict[str, Any]:
         params = {
             "variables": (
                 "{"
@@ -87,6 +90,12 @@ class Twspace(dict):
             headers=headers,
         )
         metadata = response.json()
+        if not isinstance(metadata, dict):
+            logging.error(metadata)
+            raise TypeError(
+                repr(metadata)
+                + ' is not a dict, expected a dict with ["data"]["audioSpace"]["metadata"]["media_key"]'
+            )
         try:
             media_key = metadata["data"]["audioSpace"]["metadata"]["media_key"]
             logging.debug(media_key)
@@ -163,7 +172,7 @@ class Twspace(dict):
         return os.path.join(abs_dir, basename)
 
     @classmethod
-    def from_space_url(cls, url: str):
+    def from_space_url(cls, url: str) -> "Twspace":
         """Create a Twspace instance from a space url"""
         try:
             space_id = re.findall(r"(?<=spaces/)\w*", url)[0]
@@ -172,7 +181,7 @@ class Twspace(dict):
         return cls(cls._metadata(space_id))
 
     @classmethod
-    def from_user_tweets(cls, url: str):
+    def from_user_tweets(cls, url: str) -> "Twspace":
         """Create a Twspace instance from the first space
         found in the 20 last user tweets"""
         user_id = twitter.user_id(url)
@@ -216,7 +225,7 @@ class Twspace(dict):
         return cls(cls._metadata(space_id))
 
     @classmethod
-    def from_user_avatar(cls, user_url, auth_token):
+    def from_user_avatar(cls, user_url: str, auth_token: str) -> "Twspace":
         """Create a Twspace instance from a twitter user's ongoing space"""
         headers = {
             "authorization": (
@@ -243,7 +252,7 @@ class Twspace(dict):
         return cls(cls._metadata(broadcast_id))
 
     @classmethod
-    def from_file(cls, path: str):
+    def from_file(cls, path: str) -> "Twspace":
         """Create a Twspace instance from a metadata file"""
         with open(path, "r", encoding="utf-8") as metadata_io:
             return cls(json.load(metadata_io))
