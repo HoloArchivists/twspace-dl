@@ -28,7 +28,13 @@ jobs:
         poetry install --no-interaction
     - name: Analysing the code with flake8
       run: |
-        flake8
+        poetry run flake8 .
     - name: Analysing the code with mypy
       run: |
-        mypy .
+        poetry run mypy .
+    - name: Analysing the code with black
+      run: |
+        poetry run black .
+    - name: Analysing the code with isort
+      run: |
+        poetry run isort .
