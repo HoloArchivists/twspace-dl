@@ -1,9 +1,6 @@
 name: Format
 
-on:
-  push:
-    tags:
-      - "*"
+on: [push]
 
 jobs:
   publish:
@@ -26,8 +23,3 @@ jobs:
           git config --global user.name 'Ryu1845'
           git config --global user.email 'ryu@tpgjbo.xyz'
           git diff --quiet && git diff --staged --quiet || git commit -am 'Formatted using isort and black'
-      - name: Publish (production)
-        uses: pypa/gh-action-pypi-publish@master
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
