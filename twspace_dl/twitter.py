@@ -15,7 +15,7 @@ def guest_token() -> str:
     response = requests.post(
         "https://api.twitter.com/1.1/guest/activate.json", headers=headers
     ).json()
-    token = response['guest_token']
+    token = response["guest_token"]
     if not token:
         raise RuntimeError("No guest token found after five retry")
     return token
