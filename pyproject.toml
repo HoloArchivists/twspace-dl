@@ -15,6 +15,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.8"
 requests = "^2.26.0"
+types-requests = "^2.27.11"
 
 
 [tool.poetry.scripts]
@@ -45,3 +46,9 @@ push = true
     'version = "{version}"',
     # 'current_version = "{version}"',
 ]
+
+[tool.mypy]
+python_version = 3.8
+show_error_codes = true
+pretty = true
+strict = true
