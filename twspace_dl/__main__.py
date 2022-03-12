@@ -1,10 +1,12 @@
 """Script designed to help download twitter spaces"""
 import argparse
+import datetime
 import json
 import logging
 import os
 import shutil
 import sys
+from typing import Iterable
 
 from twspace_dl.login import Login, is_expired, load_from_file, write_to_file
 from twspace_dl.twitter import guest_token
@@ -28,7 +30,22 @@ def space(args: argparse.Namespace) -> None:
         )
         sys.exit(2)
 
-    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
+    if args.log:
+        log_filename = datetime.datetime.now().strftime(
+            ".twspace-dl.%Y-%m-%d_%H-%M-%S_%s.log"
+        )
+        handlers = [
+            logging.FileHandler(log_filename),
+            logging.StreamHandler(),
+        ]  # type: Iterable[logging.Handler] | None
+    else:
+        handlers = None
+
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        handlers=handlers,
+    )
 
     auth_token = ""
     if has_login:
@@ -94,6 +111,7 @@ def main() -> None:
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument("-s", "--skip-download", action="store_true")
     parser.add_argument("-k", "--keep-files", action="store_true")
+    parser.add_argument("-l", "--log", action="store_true", help="create logfile")
     parser.add_argument("--input-cookie-file", type=str, metavar="COOKIE_FILE")
 
     login_group.add_argument("--username", type=str, metavar="USERNAME", default=None)
