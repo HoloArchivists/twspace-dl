@@ -18,6 +18,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install flake8 mypy
+        mypy --install-types
     - name: Analysing the code with flake8 and mypy
       run: |
         flake8 --max-line-length 89
