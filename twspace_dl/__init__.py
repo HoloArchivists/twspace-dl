@@ -1,7 +1,7 @@
-from .twspace_dl import TwspaceDL
-from .twspace import Twspace
 from . import twitter
 from .login import Login, load_from_file, write_to_file
+from .twspace import Twspace
+from .twspace_dl import TwspaceDL
 
 __all__ = [
     "Twspace",

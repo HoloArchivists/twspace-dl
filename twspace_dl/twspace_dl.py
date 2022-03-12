@@ -4,7 +4,6 @@ import re
 import shutil
 import subprocess
 import tempfile
-
 from functools import cached_property
 from urllib.parse import urlparse
 

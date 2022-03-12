@@ -22,6 +22,10 @@ twspace_dl = "twspace_dl.__main__:main"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
+black = "^22.1.0"
+mypy = "^0.940"
+isort = "^5.10.1"
+flake8 = "^4.0.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -6,10 +6,10 @@ import os
 import shutil
 import sys
 
-from twspace_dl.twspace_dl import TwspaceDL
-from twspace_dl.twspace import Twspace
-from twspace_dl.login import Login, load_from_file, write_to_file, is_expired
+from twspace_dl.login import Login, is_expired, load_from_file, write_to_file
 from twspace_dl.twitter import guest_token
+from twspace_dl.twspace import Twspace
+from twspace_dl.twspace_dl import TwspaceDL
 
 
 def main() -> None:
