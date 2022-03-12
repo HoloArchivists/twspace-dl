@@ -40,9 +40,17 @@ class Twspace(dict):
         self["title"] = root["title"]
         self["creator_name"] = creator_info["name"]  # type: ignore
         self["creator_screen_name"] = creator_info["screen_name"]  # type: ignore
-        self["start_date"] = datetime.fromtimestamp(
-            int(root["started_at"]) / 1000
-        ).strftime("%Y-%m-%d")
+        try:
+            self["start_date"] = datetime.fromtimestamp(
+                int(root["started_at"]) / 1000
+            ).strftime("%Y-%m-%d")
+        except ValueError as err:
+            sched_start = datetime.fromtimestamp(
+                int(root["scheduled_start"]) / 1000
+            ).strftime("%Y-%m-%d %H:%M:%S")
+            raise ValueError(
+                f"Space should start at {sched_start}, try again later"
+            ) from err
         self["state"] = root["state"]
         self["available_for_replay"] = root["is_space_available_for_replay"]
         self["media_key"] = root["media_key"]
