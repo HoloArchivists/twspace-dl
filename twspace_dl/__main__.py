@@ -23,9 +23,7 @@ def space(args: argparse.Namespace) -> None:
     )
     has_login = (args.username and args.password) or args.input_cookie_file
     if not has_input:
-        print(
-            "Either user url, space url, dynamic url or master url should be provided"
-        )
+        print("Either user url, space url, dynamic url or master url should be provided")
         sys.exit(2)
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)

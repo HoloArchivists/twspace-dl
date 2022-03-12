@@ -156,9 +156,7 @@ class Login:
             "subtask_inputs": [
                 {
                     "subtask_id": "AccountDuplicationCheck",
-                    "check_logged_in_account": {
-                        "link": "AccountDuplicationCheck_false"
-                    },
+                    "check_logged_in_account": {"link": "AccountDuplicationCheck_false"},
                 }
             ],
         }
@@ -260,7 +258,11 @@ class Login:
             self.task_url, headers=self._headers, json=self._account_dup_check_data
         ).json()
         # RequestsCookieJar.keys is untyped in types-requests
-        if isinstance(request_flow, dict) and "auth_token" in request_flow.cookies.keys():  # type: ignore[no-untyped-call]
+        if (
+            isinstance(request_flow, dict)
+            and "auth_token"
+            in request_flow.cookies.keys()  # type: ignore[no-untyped-call]
+        ):
             return str(request_flow.cookies["auth_token"])
         if isinstance(request_flow, dict) and "flow_token" in request_flow.keys():
             self.flow_token = request_flow["flow_token"]

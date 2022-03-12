@@ -8,7 +8,6 @@ from datetime import datetime
 from typing import Any, Dict
 
 import requests
-from argon2 import Type
 
 from . import twitter
 
@@ -93,7 +92,8 @@ class Twspace(Dict[str, Any]):
             logging.error(metadata)
             raise TypeError(
                 repr(metadata)
-                + ' is not a dict, expected a dict with ["data"]["audioSpace"]["metadata"]["media_key"]'
+                + " is not a dict, expected a dict with "
+                + '["data"]["audioSpace"]["metadata"]["media_key"]'
             )
         try:
             media_key = metadata["data"]["audioSpace"]["metadata"]["media_key"]
