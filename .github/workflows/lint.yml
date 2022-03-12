@@ -1,6 +1,9 @@
 name: Lint
 
-on: [push]
+on:
+  push:
+    branches: ["main"]
+  pull_request:
 
 jobs:
   build:
@@ -18,7 +21,9 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install flake8 mypy types-requests
-    - name: Analysing the code with flake8 and mypy
+    - name: Analysing the code with flake8
       run: |
         flake8 --max-line-length 89
+    - name: Analysing the code with mypy
+      run: |
         mypy .
