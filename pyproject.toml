@@ -29,6 +29,7 @@ pytest = "^6.2.5"
 black = "^22.1.0"
 mypy = "^0.940"
 isort = "^5.10.1"
+flake8 = "^4.0.1"
 
 [tool.bumpver]
 current_version = "2022.3.12.1"
