@@ -1,0 +1,25 @@
+name: Format
+
+on: [push]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+      - name: Setup Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install black isort
+      - name: Format
+        run: |
+          black .
+          isort **/**.py
+          git config --global user.name 'Auto format'
+          git config --global user.email 'format@github.com'
+          git diff --quiet && git diff --staged --quiet || git commit -am 'Formatted using isort and black' && git push

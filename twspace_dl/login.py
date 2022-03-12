@@ -52,90 +52,6 @@ class Login:
         self.task_url = "https://twitter.com/i/api/1.1/onboarding/task.json"
         self.flow_token: str
 
-    def login(self) -> str:
-        """Login to twitter"""
-        request_flow = self.session.post(
-            self.task_url,
-            params={"flow_name": "login"},
-            headers=self._headers,
-            json=self._initial_params,
-        )
-        try:
-            self.flow_token = request_flow.json()["flow_token"]
-        except KeyError as err:
-            raise RuntimeError(
-                "Error while initiating parameters:", request_flow.json()
-            ) from err
-
-        # js instrumentation subtask
-        request_flow = self.session.post(
-            self.task_url, headers=self._headers, json=self._js_instrumentation_data
-        )
-        try:
-            self.flow_token = request_flow.json()["flow_token"]
-        except KeyError as err:
-            raise RuntimeError(
-                "Error while performing js instrumentation:", request_flow.json()
-            ) from err
-
-        # user identifier sso subtask
-        request_flow = self.session.post(
-            self.task_url, headers=self._headers, json=self._user_identifier_sso_data
-        )
-        try:
-            self.flow_token = request_flow.json()["flow_token"]
-        except KeyError as err:
-            raise RuntimeError("Error identifying user:", request_flow.json()) from err
-
-        # alternate identifier
-        request_flow = self.session.post(
-            self.task_url, headers=self._headers, json=self._login_alternate_identifier
-        ).json()
-        if "flow_token" in request_flow.keys():
-            self.flow_token = request_flow["flow_token"]
-            # Sometimes it doesn't check for alternate id
-            # raise RuntimeError(
-            #     "Error while checking for alternate id", request_flow.json()
-            # ) from err
-
-        # enter password
-        request_flow = self.session.post(
-            self.task_url, headers=self._headers, json=self._enter_password_data
-        )
-        if "auth_token" in request_flow.cookies.keys():
-            return str(request_flow.cookies["auth_token"])
-        if (
-            "LoginTwoFactorAuthChallenge" in request_flow.text
-            or "AccountDuplicationCheck" in request_flow.text
-        ):
-            self.flow_token = request_flow.json()["flow_token"]
-        else:
-            raise RuntimeError(
-                "Error while while entering password:", request_flow.json()
-            )
-
-        # account duplication check
-        request_flow = self.session.post(
-            self.task_url, headers=self._headers, json=self._account_dup_check_data
-        ).json()
-        if "auth_token" in request_flow.cookies.keys():
-            return str(request_flow.cookies["auth_token"])
-        if "flow_token" in request_flow.keys():
-            self.flow_token = request_flow["flow_token"]
-            # Sometimes it doesn't check account duplication
-            # raise RuntimeError(
-            #     "Error while checking account duplication:", request_flow.json()
-            # ) from err
-
-        # 2FA
-        request_flow = self.session.post(
-            self.task_url, headers=self._headers, json=self._enter_2fa
-        )
-        if "auth_token" in request_flow.cookies.keys():
-            print("Success!")
-            return str(request_flow.cookies["auth_token"])
-        raise RuntimeError("Login failed after 2FA. Error message: ", request_flow.text)
-
     @property
     def _headers(self):
         return {
@@ -274,3 +190,87 @@ class Login:
                 }
             ],
         }
+
+    def login(self) -> str:
+        """Login to twitter"""
+        request_flow = self.session.post(
+            self.task_url,
+            params={"flow_name": "login"},
+            headers=self._headers,
+            json=self._initial_params,
+        )
+        try:
+            self.flow_token = request_flow.json()["flow_token"]
+        except KeyError as err:
+            raise RuntimeError(
+                "Error while initiating parameters:", request_flow.json()
+            ) from err
+
+        # js instrumentation subtask
+        request_flow = self.session.post(
+            self.task_url, headers=self._headers, json=self._js_instrumentation_data
+        )
+        try:
+            self.flow_token = request_flow.json()["flow_token"]
+        except KeyError as err:
+            raise RuntimeError(
+                "Error while performing js instrumentation:", request_flow.json()
+            ) from err
+
+        # user identifier sso subtask
+        request_flow = self.session.post(
+            self.task_url, headers=self._headers, json=self._user_identifier_sso_data
+        )
+        try:
+            self.flow_token = request_flow.json()["flow_token"]
+        except KeyError as err:
+            raise RuntimeError("Error identifying user:", request_flow.json()) from err
+
+        # alternate identifier
+        request_flow = self.session.post(
+            self.task_url, headers=self._headers, json=self._login_alternate_identifier
+        ).json()
+        if "flow_token" in request_flow.keys():
+            self.flow_token = request_flow["flow_token"]
+            # Sometimes it doesn't check for alternate id
+            # raise RuntimeError(
+            #     "Error while checking for alternate id", request_flow.json()
+            # ) from err
+
+        # enter password
+        request_flow = self.session.post(
+            self.task_url, headers=self._headers, json=self._enter_password_data
+        )
+        if "auth_token" in request_flow.cookies.keys():
+            return str(request_flow.cookies["auth_token"])
+        if (
+            "LoginTwoFactorAuthChallenge" in request_flow.text
+            or "AccountDuplicationCheck" in request_flow.text
+        ):
+            self.flow_token = request_flow.json()["flow_token"]
+        else:
+            raise RuntimeError(
+                "Error while while entering password:", request_flow.json()
+            )
+
+        # account duplication check
+        request_flow = self.session.post(
+            self.task_url, headers=self._headers, json=self._account_dup_check_data
+        ).json()
+        if "auth_token" in request_flow.cookies.keys():
+            return str(request_flow.cookies["auth_token"])
+        if "flow_token" in request_flow.keys():
+            self.flow_token = request_flow["flow_token"]
+            # Sometimes it doesn't check account duplication
+            # raise RuntimeError(
+            #     "Error while checking account duplication:", request_flow.json()
+            # ) from err
+
+        # 2FA
+        request_flow = self.session.post(
+            self.task_url, headers=self._headers, json=self._enter_2fa
+        )
+        if "auth_token" in request_flow.cookies.keys():
+            print("Success!")
+            return str(request_flow.cookies["auth_token"])
+        raise RuntimeError("Login failed after 2FA. Error message: ", request_flow.text)
