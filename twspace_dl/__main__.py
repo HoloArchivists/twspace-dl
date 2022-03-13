@@ -32,7 +32,7 @@ def space(args: argparse.Namespace) -> None:
 
     if args.log:
         log_filename = datetime.datetime.now().strftime(
-            ".twspace-dl.%Y-%m-%d_%H-%M-%S_%s.log"
+            ".twspace-dl.%Y-%m-%d_%H-%M-%S_%f.log"
         )
         handlers = [
             logging.FileHandler(log_filename),
