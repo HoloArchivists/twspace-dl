@@ -9,8 +9,8 @@
     <a href="https://pypi.org/project/twspace-dl/">
       <img src="https://img.shields.io/pypi/dm/twspace-dl?label=DOWNLOADS%20%28PYPI%29&amp;style=for-the-badge" alt="PyPI DLs">
     </a>
-    <a href="https://github.com/Ryu1845/twspace-dl/releases">
-      <img src="https://img.shields.io/github/downloads/Ryu1845/twspace-dl/total?label=DOWNLOADS%20%28GITHUB%29&amp;style=for-the-badge" alt="Github Releases DLs">
+    <a href="https://github.com/HoloArchivists/twspace-dl/releases">
+      <img src="https://img.shields.io/github/downloads/HoloArchivists/twspace-dl/total?label=DOWNLOADS%20%28GITHUB%29&amp;style=for-the-badge" alt="Github Releases DLs">
     </a>
   </p>
   <p>A python module to download twitter spaces.</p>
@@ -24,9 +24,9 @@ ffmpeg
 
 ### From portable binaries
 
-[Linux](https://github.com/Ryu1845/twspace-dl/releases/latest/download/twspace_dl.bin)
+[Linux](https://github.com/HoloArchivists/twspace-dl/releases/latest/download/twspace_dl.bin)
 
-[Windows](https://github.com/Ryu1845/twspace-dl/releases/latest/download/twspace_dl.exe)
+[Windows](https://github.com/HoloArchivists/twspace-dl/releases/latest/download/twspace_dl.exe)
 
 ### From PyPI
 
@@ -37,7 +37,7 @@ pip install twspace-dl
 ### From source
 
 ```bash
-pip install git+https://github.com/Ryu1845/twspace-dl
+pip install git+https://github.com/HoloArchivists/twspace-dl
 ```
 
 ## Usage
@@ -145,7 +145,7 @@ This is an error in ffmpeg that does not affect twspace_dl at all as far as I k
 
 ## Service 
 
-To run as a systemd service please refer to https://github.com/Ryu1845/twspace-dl/blob/main/SERVICE.md
+To run as a systemd service please refer to https://github.com/HoloArchivists/twspace-dl/blob/main/SERVICE.md
 
 ## Docker
 
@@ -154,7 +154,7 @@ To run as a systemd service please refer to https://github.com/Ryu1845/twspace-d
 > Use ${pwd} in powershell, or $(pwd) in bash
 
 ```bash
-docker run --rm -v ${pwd}:/output ryu1845/twspace-dl -i space_url
+docker run --rm -v ${pwd}:/output HoloArchivists/twspace-dl -i space_url
 ```
 
 ### Run as monitoring service
