@@ -8,6 +8,8 @@ import shutil
 import sys
 from typing import Iterable
 
+from gooey import Gooey, GooeyParser
+
 from twspace_dl.login import Login, is_expired, load_from_file, write_to_file
 from twspace_dl.twitter import guest_token
 from twspace_dl.twspace import Twspace
@@ -97,42 +99,65 @@ def space(args: argparse.Namespace) -> None:
                 shutil.rmtree(twspace_dl._tmpdir)
 
 
+@Gooey(program_name="twspace-dl", default_size=(1080, 720), tabbed_groups=True)
 def main() -> None:
     """Main function, creates the argument parser"""
-    parser = argparse.ArgumentParser(
-        description="Script designed to help download twitter spaces"
+    parser = GooeyParser(description="App designed to help download twitter spaces")
+
+    general_group = parser.add_argument_group("General")
+    input_group = parser.add_argument_group("Input")
+    input_method = input_group.add_mutually_exclusive_group()
+    output_group = parser.add_argument_group("Output")
+    login_group = parser.add_argument_group("Login")
+
+    general_group.add_argument(
+        "-v", "--verbose", action="store_true", metavar="Debug Mode(verbose)"
+    )
+    general_group.add_argument(
+        "-s", "--skip-download", action="store_true", metavar="Skip Download"
+    )
+    general_group.add_argument(
+        "-k", "--keep-files", action="store_true", metavar="Keep Intermediate Files"
+    )
+    general_group.add_argument(
+        "-l", "--log", action="store_true", help="Create Log File", metavar="Log"
     )
 
-    input_group = parser.add_argument_group("input")
-    input_method = input_group.add_mutually_exclusive_group()
-    output_group = parser.add_argument_group("output")
-    login_group = parser.add_argument_group("login")
-
-    parser.add_argument("-v", "--verbose", action="store_true")
-    parser.add_argument("-s", "--skip-download", action="store_true")
-    parser.add_argument("-k", "--keep-files", action="store_true")
-    parser.add_argument("-l", "--log", action="store_true", help="create logfile")
-    parser.add_argument("--input-cookie-file", type=str, metavar="COOKIE_FILE")
-
-    login_group.add_argument("--username", type=str, metavar="USERNAME", default=None)
-    login_group.add_argument("--password", type=str, metavar="PASSWORD", default=None)
+    login_group.add_argument(
+        "--input-cookie-file", type=str, metavar="Cookie File", widget="FileChooser"
+    )
+    login_group.add_argument("--username", type=str, metavar="Username", default=None)
+    login_group.add_argument("--password", type=str, metavar="Password", default=None)
     login_group.add_argument(
         "--output-cookie-file",
         type=str,
-        metavar="OUTPUT_COOKIE_FILE",
+        metavar="Output Cookie File",
         default=None,
+        help="Write credentials from login",
+        widget="FileChooser",
     )
 
-    input_method.add_argument("-i", "--input-url", type=str, metavar="SPACE_URL")
-    input_method.add_argument("-U", "--user-url", type=str, metavar="USER_URL")
+    input_method.add_argument("-i", "--input-url", type=str, metavar="Space URL")
+    input_method.add_argument("-U", "--user-url", type=str, metavar="User URL")
+    input_method.add_argument(
+        "-M",
+        "--input-metadata",
+        type=str,
+        metavar="Metadata Path",
+        help=(
+            "Use a metadata json file instead of input url\n"
+            "(useful for very old ended spaces)"
+        ),
+        widget="FileChooser",
+    )
     input_group.add_argument(
         "-d",
         "--from-dynamic-url",
         type=str,
-        metavar="DYN_URL",
+        metavar="Dynamic Playlist URL",
         help=(
-            "use the dynamic url for the processes(useful for ended spaces)\n"
-            "example: https://prod-fastly-ap-northeast-1.video.pscp.tv/Transcoding/v1/"
+            "Use the dynamic url for the processes(useful for ended spaces)\n"
+            "Example: https://prod-fastly-ap-northeast-1.video.pscp.tv/Transcoding/v1/"
             "hls/zUUpEgiM0M18jCGxo2eSZs99p49hfyFQr1l4cdze-Sp4T-DQOMMoZpkbdyetgfwscfvvUk"
             "AdeF-I5hPI4bGoYg/non_transcode/ap-northeast-1/"
             "periscope-replay-direct-prod-ap-northeast-1-public/"
@@ -143,53 +168,47 @@ def main() -> None:
         "-f",
         "--from-master-url",
         type=str,
-        metavar="URL",
+        metavar="Master Playlist URL",
         help=(
-            "use the master url for the processes(useful for ended spaces)\n"
-            "example: https://prod-fastly-ap-northeast-1.video.pscp.tv/Transcoding/v1/"
+            "Use the master url for the processes(useful for ended spaces)\n"
+            "Example: https://prod-fastly-ap-northeast-1.video.pscp.tv/Transcoding/v1/"
             "hls/YRSsw6_P5xUZHMualK5-ihvePR6o4QmoZVOBGicKvmkL_KB9IQYtxVqm3P_"
             "vpZ2HnFkoRfar4_uJOjqC8OCo5A/non_transcode/ap-northeast-1/"
             "periscope-replay-direct-prod-ap-northeast-1-public/"
             "audio-space/master_playlist.m3u8"
         ),
     )
-    input_group.add_argument(
-        "-M",
-        "--input-metadata",
-        type=str,
-        metavar="PATH",
-        help=(
-            "use a metadata json file instead of input url\n"
-            "(useful for very old ended spaces)"
-        ),
-    )
 
-    output_group.add_argument(
-        "-o",
-        "--output",
-        type=str,
-        metavar="FORMAT_STR",
-    )
+    output_group.add_argument("-o", "--output", type=str, metavar="Format String")
     output_group.add_argument(
         "-m",
         "--write-metadata",
         action="store_true",
-        help="write the full metadata json to a file",
+        help="Write the full metadata json to a file",
+        metavar="Write Metadata",
     )
     output_group.add_argument(
         "-p",
         "--write-playlist",
         action="store_true",
         help=(
-            "write the m3u8 used to download the stream"
+            "Write the m3u8 used to download the stream"
             "(e.g. if you want to use another downloader)"
         ),
+        metavar="Write Playlist",
     )
     output_group.add_argument(
-        "-u", "--url", action="store_true", help="display the master url"
+        "-u",
+        "--url",
+        action="store_true",
+        metavar="Display Master Playlist URL",
     )
     output_group.add_argument(
-        "--write-url", type=str, metavar="URL_OUTPUT", help="write master url to file"
+        "--write-url",
+        type=str,
+        metavar="Master URL File Path",
+        help="Write master url to file",
+        widget="FileChooser",
     )
     parser.set_defaults(func=space)
     if len(sys.argv) == 1:
