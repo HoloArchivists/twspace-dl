@@ -106,7 +106,9 @@ class TwspaceDL:
         cmd_base = [
             "ffmpeg",
             "-y",
-            "-stats",
+            "-progress",
+            "-",
+            "-nostats",
             "-v",
             "warning",
             "-i",
@@ -126,7 +128,7 @@ class TwspaceDL:
         cmd_old = cmd_base.copy()
         cmd_old.insert(1, "-protocol_whitelist")
         cmd_old.insert(2, "file,https,tls,tcp")
-        cmd_old.insert(8, filename_m3u8)
+        cmd_old.insert(10, filename_m3u8)
         cmd_old.append(filename_old)
 
         if state == "Running":

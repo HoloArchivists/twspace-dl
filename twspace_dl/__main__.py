@@ -34,10 +34,10 @@ def space(args: argparse.Namespace) -> None:
 
     if args.log:
         log_filename = datetime.datetime.now().strftime(
-            ".twspace-dl.%Y-%m-%d_%H-%M-%S_%s.log"
+            ".twspace-dl.%Y-%m-%d_%H-%M-%S_%f.log"
         )
         handlers = [
-            logging.FileHandler(log_filename),
+            logging.FileHandler(log_filename, encoding="utf-8"),
             logging.StreamHandler(),
         ]  # type: Iterable[logging.Handler] | None
     else:
@@ -99,7 +99,12 @@ def space(args: argparse.Namespace) -> None:
                 shutil.rmtree(twspace_dl._tmpdir)
 
 
-@Gooey(program_name="twspace-dl", default_size=(1080, 720), tabbed_groups=True)
+@Gooey(
+    program_name="twspace-dl",
+    default_size=(1080, 720),
+    tabbed_groups=True,
+    disable_progress_bar_animation=True,
+)
 def main() -> None:
     """Main function, creates the argument parser"""
     parser = GooeyParser(description="App designed to help download twitter spaces")
@@ -211,9 +216,6 @@ def main() -> None:
         widget="FileChooser",
     )
     parser.set_defaults(func=space)
-    if len(sys.argv) == 1:
-        parser.print_help(sys.stderr)
-        sys.exit(1)
     args = parser.parse_args()
     args.func(args)
 
