@@ -71,7 +71,7 @@ class TwspaceDL:
 
     @property
     def playlist_url(self) -> str:
-        """Get the URL containing the chunks filenames"""
+        """Get the URL containing the chunks filenames"""
         response = requests.get(self.master_url)
         playlist_suffix = response.text.splitlines()[3]
         domain = urlparse(self.master_url).netloc
@@ -92,7 +92,7 @@ class TwspaceDL:
         path = os.path.join(save_dir, filename)
         with open(path, "w", encoding="utf-8") as stream_io:
             stream_io.write(self.playlist_text)
-        logging.info(f"{path} written to disk")
+        logging.info(f"{path} written to disk")
 
     def download(self) -> None:
         """Download a twitter space"""
