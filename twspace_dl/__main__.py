@@ -4,7 +4,6 @@ import datetime
 import json
 import logging
 import os
-import shutil
 import sys
 from typing import Iterable
 
@@ -97,8 +96,8 @@ def space(args: argparse.Namespace) -> int:
         except KeyboardInterrupt:
             logging.info("Download Interrupted")
         finally:
-            if not args.keep_files and os.path.exists(twspace_dl._tmpdir):
-                shutil.rmtree(twspace_dl._tmpdir)
+            if not args.keep_files and os.path.exists(twspace_dl.tempdir.name):
+                twspace_dl.tempdir.cleanup()
     return EXIT_CODE_SUCCESS
 
 
