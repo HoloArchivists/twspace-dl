@@ -92,7 +92,7 @@ class TwspaceDL:
         path = os.path.join(save_dir, filename)
         with open(path, "w", encoding="utf-8") as stream_io:
             stream_io.write(self.playlist_text)
-        logging.info(f"{path} written to disk")
+        logging.info("%(path)s written to disk", dict(path=path))
 
     def download(self) -> None:
         """Download a twitter space"""
@@ -128,6 +128,7 @@ class TwspaceDL:
         cmd_old.insert(2, "file,https,tls,tcp")
         cmd_old.insert(8, filename_m3u8)
         cmd_old.append(filename_old)
+        logging.debug("Command for the old part: %s", " ".join(cmd_old))
 
         if state == "Running":
             filename_new = os.path.join(tempdir, filename + "_new.m4a")
@@ -153,6 +154,8 @@ class TwspaceDL:
             cmd_final.insert(10, concat_fn)
             cmd_final.append(self.filename + ".m4a")
 
+            logging.debug("Command for the new part: %s", " ".join(cmd_new))
+            logging.debug("Command for the merge: %s", " ".join(cmd_final))
             try:
                 subprocess.run(cmd_new, check=True)
                 subprocess.run(cmd_old, check=True)

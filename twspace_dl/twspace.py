@@ -89,10 +89,10 @@ class Twspace(dict):
         metadata = response.json()
         try:
             media_key = metadata["data"]["audioSpace"]["metadata"]["media_key"]
-            logging.debug(media_key)
+            logging.debug("Media Key: %s", media_key)
         except KeyError as error:
             logging.error(metadata)
-            raise RuntimeError(metadata) from error
+            raise ValueError("Media Key not available.\nUser is not live") from error
         return metadata
 
     # https://gist.github.com/dbr/256270
@@ -168,7 +168,12 @@ class Twspace(dict):
         try:
             space_id = re.findall(r"(?<=spaces/)\w*", url)[0]
         except IndexError as err:
-            raise ValueError("Input URL is not valid") from err
+            raise ValueError(
+                (
+                    "Input URL is not valid.\n"
+                    "The URL format should 'https://twitter.com/i/spaces/<space_id>'"
+                )
+            ) from err
         return cls(cls._metadata(space_id))
 
     @classmethod
@@ -212,7 +217,9 @@ class Twspace(dict):
         try:
             space_id = re.findall(r"(?<=https://twitter.com/i/spaces/)\w*", tweets)[0]
         except (IndexError, json.JSONDecodeError) as err:
-            raise RuntimeError("User is not live") from err
+            raise RuntimeError(
+                "User hasn't tweeted a space, retry with cookies"
+            ) from err
         return cls(cls._metadata(space_id))
 
     @classmethod
@@ -239,7 +246,9 @@ class Twspace(dict):
                 "audiospace"
             ]["broadcast_id"]
         except KeyError as err:
-            raise ValueError("User is not live") from err
+            raise ValueError(
+                "Broadcast ID is not available.\nUser is probably not live"
+            ) from err
         return cls(cls._metadata(broadcast_id))
 
     @classmethod

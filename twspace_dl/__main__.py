@@ -6,12 +6,23 @@ import logging
 import os
 import shutil
 import sys
-from typing import Iterable
+from typing import Iterable, Type
+from types import TracebackType
 
 from twspace_dl.login import Login, is_expired, load_from_file, write_to_file
 from twspace_dl.twitter import guest_token
 from twspace_dl.twspace import Twspace
 from twspace_dl.twspace_dl import TwspaceDL
+
+
+def exception_hook(
+    _: Type[BaseException],
+    exc_value: BaseException,
+    _t: TracebackType = None,
+) -> None:
+    """Make Exceptions more legible for the end users"""
+    # Exception type and value
+    print(f"\033[31;1;4mError\033[0m: {exc_value}\nRetry with -v to see more details")
 
 
 def space(args: argparse.Namespace) -> None:
@@ -32,7 +43,7 @@ def space(args: argparse.Namespace) -> None:
 
     if args.log:
         log_filename = datetime.datetime.now().strftime(
-            ".twspace-dl.%Y-%m-%d_%H-%M-%S_%s.log"
+            ".twspace-dl.%Y-%m-%d_%H-%M-%S_%f.log"
         )
         handlers = [
             logging.FileHandler(log_filename),
@@ -41,11 +52,19 @@ def space(args: argparse.Namespace) -> None:
     else:
         handlers = None
 
-    logging.basicConfig(
-        level=logging.DEBUG if args.verbose else logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(message)s",
-        handlers=handlers,
-    )
+    if not args.verbose:
+        sys.excepthook = exception_hook
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(levelname)s: %(message)s",
+            handlers=handlers,
+        )
+    else:
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(asctime)s [%(levelname)s] %(message)s",
+            handlers=handlers,
+        )
 
     auth_token = ""
     if has_login:
@@ -91,7 +110,7 @@ def space(args: argparse.Namespace) -> None:
         try:
             twspace_dl.download()
         except KeyboardInterrupt:
-            logging.info("Download Interrupted")
+            logging.info("Download Interrupted by user")
         finally:
             if not args.keep_files and os.path.exists(twspace_dl._tmpdir):
                 shutil.rmtree(twspace_dl._tmpdir)
