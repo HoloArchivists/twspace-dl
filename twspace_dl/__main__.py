@@ -5,8 +5,8 @@ import json
 import logging
 import os
 import sys
-from typing import Iterable, Type
 from types import TracebackType
+from typing import Iterable, Type
 
 from twspace_dl.login import Login, is_expired, load_from_file, write_to_file
 from twspace_dl.twitter import guest_token
