@@ -29,31 +29,31 @@ class Twspace(dict):
                 "media_key": "",
             },
         )
+        if metadata:
+            root = defaultdict(str, metadata["data"]["audioSpace"]["metadata"])
+            creator_info = root["creator_results"]["result"]["legacy"]  # type: ignore
 
-        root = defaultdict(str, metadata["data"]["audioSpace"]["metadata"])
-        creator_info = root["creator_results"]["result"]["legacy"]  # type: ignore
-
-        self.source = metadata
-        self.root = root
-        self["id"] = root["rest_id"]
-        self["url"] = "https://twitter.com/i/spaces/" + self["id"]
-        self["title"] = root["title"]
-        self["creator_name"] = creator_info["name"]  # type: ignore
-        self["creator_screen_name"] = creator_info["screen_name"]  # type: ignore
-        try:
-            self["start_date"] = datetime.fromtimestamp(
-                int(root["started_at"]) / 1000
-            ).strftime("%Y-%m-%d")
-        except ValueError as err:
-            sched_start = datetime.fromtimestamp(
-                int(root["scheduled_start"]) / 1000
-            ).strftime("%Y-%m-%d %H:%M:%S")
-            raise ValueError(
-                f"Space should start at {sched_start}, try again later"
-            ) from err
-        self["state"] = root["state"]
-        self["available_for_replay"] = root["is_space_available_for_replay"]
-        self["media_key"] = root["media_key"]
+            self.source = metadata
+            self.root = root
+            self["id"] = root["rest_id"]
+            self["url"] = "https://twitter.com/i/spaces/" + self["id"]
+            self["title"] = root["title"]
+            self["creator_name"] = creator_info["name"]  # type: ignore
+            self["creator_screen_name"] = creator_info["screen_name"]  # type: ignore
+            try:
+                self["start_date"] = datetime.fromtimestamp(
+                    int(root["started_at"]) / 1000
+                ).strftime("%Y-%m-%d")
+            except ValueError as err:
+                sched_start = datetime.fromtimestamp(
+                    int(root["scheduled_start"]) / 1000
+                ).strftime("%Y-%m-%d %H:%M:%S")
+                raise ValueError(
+                    f"Space should start at {sched_start}, try again later"
+                ) from err
+            self["state"] = root["state"]
+            self["available_for_replay"] = root["is_space_available_for_replay"]
+            self["media_key"] = root["media_key"]
 
     @staticmethod
     def _metadata(space_id) -> dict:
@@ -171,7 +171,7 @@ class Twspace(dict):
             raise ValueError(
                 (
                     "Input URL is not valid.\n"
-                    "The URL format should 'https://twitter.com/i/spaces/<space_id>'"
+                    "The URL format should 'https://twitter.com/i/spaces/<space_id>'"
                 )
             ) from err
         return cls(cls._metadata(space_id))

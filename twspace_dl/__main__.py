@@ -87,8 +87,17 @@ def space(args: argparse.Namespace) -> int:
             twspace = Twspace.from_user_tweets(args.user_url)
     elif args.input_metadata:
         twspace = Twspace.from_file(args.input_metadata)
-    else:
+    elif args.input_url:
         twspace = Twspace.from_space_url(args.input_url)
+    else:
+        logging.warning(
+            (
+                "No metadata provided.\n"
+                "The resulting file won't be associated with the original space.\n"
+                "Please consider adding a space url or a metadata file"
+            )
+        )
+        twspace = Twspace({})
     twspace_dl = TwspaceDL(twspace, args.output)
 
     if args.from_dynamic_url:

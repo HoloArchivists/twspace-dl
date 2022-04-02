@@ -92,7 +92,7 @@ class TwspaceDL:
         path = os.path.join(save_dir, filename)
         with open(path, "w", encoding="utf-8") as stream_io:
             stream_io.write(self.playlist_text)
-        logging.info("%(path)s written to disk", dict(path=path))
+        logging.debug("%(path)s written to disk", dict(path=path))
 
     @property
     def tempdir(self):
