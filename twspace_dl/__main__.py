@@ -4,7 +4,6 @@ import datetime
 import json
 import logging
 import os
-import shutil
 import sys
 from typing import Iterable, Type
 from types import TracebackType
@@ -13,6 +12,10 @@ from twspace_dl.login import Login, is_expired, load_from_file, write_to_file
 from twspace_dl.twitter import guest_token
 from twspace_dl.twspace import Twspace
 from twspace_dl.twspace_dl import TwspaceDL
+
+EXIT_CODE_SUCCESS = 0
+EXIT_CODE_ERROR = 1
+EXIT_CODE_MISUSE = 2
 
 
 def exception_hook(
@@ -25,7 +28,7 @@ def exception_hook(
     print(f"\033[31;1;4mError\033[0m: {exc_value}\nRetry with -v to see more details")
 
 
-def space(args: argparse.Namespace) -> None:
+def space(args: argparse.Namespace) -> int:
     """Manage the twitter space related function"""
     has_input = (
         args.user_url
@@ -39,7 +42,7 @@ def space(args: argparse.Namespace) -> None:
         print(
             "Either user url, space url, dynamic url or master url should be provided"
         )
-        sys.exit(2)
+        return EXIT_CODE_MISUSE
 
     if args.log:
         log_filename = datetime.datetime.now().strftime(
@@ -112,11 +115,12 @@ def space(args: argparse.Namespace) -> None:
         except KeyboardInterrupt:
             logging.info("Download Interrupted by user")
         finally:
-            if not args.keep_files and os.path.exists(twspace_dl._tmpdir):
-                shutil.rmtree(twspace_dl._tmpdir)
+            if not args.keep_files and os.path.exists(twspace_dl.tempdir.name):
+                twspace_dl.tempdir.cleanup()
+    return EXIT_CODE_SUCCESS
 
 
-def main() -> None:
+def main() -> int:
     """Main function, creates the argument parser"""
     parser = argparse.ArgumentParser(
         description="Script designed to help download twitter spaces"
@@ -213,9 +217,10 @@ def main() -> None:
     parser.set_defaults(func=space)
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
-        sys.exit(1)
+        return EXIT_CODE_ERROR
     args = parser.parse_args()
     args.func(args)
+    return EXIT_CODE_SUCCESS
 
 
 if __name__ == "__main__":

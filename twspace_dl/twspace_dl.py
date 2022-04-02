@@ -21,7 +21,7 @@ class TwspaceDL:
         self.space = space
         self.format_str = format_str or DEFAULT_FNAME_FORMAT
         self.session = requests.Session()
-        self._tmpdir: str
+        self._tempdir = tempfile.TemporaryDirectory(dir=".")
 
     @cached_property
     def filename(self) -> str:
@@ -71,7 +71,7 @@ class TwspaceDL:
 
     @property
     def playlist_url(self) -> str:
-        """Get the URL containing the chunks filenames"""
+        """Get the URL containing the chunks filenames"""
         response = requests.get(self.master_url)
         playlist_suffix = response.text.splitlines()[3]
         domain = urlparse(self.master_url).netloc
@@ -92,15 +92,19 @@ class TwspaceDL:
         path = os.path.join(save_dir, filename)
         with open(path, "w", encoding="utf-8") as stream_io:
             stream_io.write(self.playlist_text)
-        logging.info("%(path)s written to disk", dict(path=path))
+        logging.info("%(path)s written to disk", dict(path=path))
+
+    @property
+    def tempdir(self):
+        """Return tempdir"""
+        return self._tempdir
 
     def download(self) -> None:
         """Download a twitter space"""
         if not shutil.which("ffmpeg"):
             raise FileNotFoundError("ffmpeg not installed")
         space = self.space
-        tempdir = self._tmpdir = tempfile.mkdtemp(dir=".")
-        self.write_playlist(save_dir=tempdir)
+        self.write_playlist(save_dir=self._tempdir.name)
         state = space["state"]
 
         cmd_base = [
@@ -121,8 +125,8 @@ class TwspaceDL:
         ]
 
         filename = os.path.basename(self.filename)
-        filename_m3u8 = os.path.join(tempdir, filename + ".m3u8")
-        filename_old = os.path.join(tempdir, filename + ".m4a")
+        filename_m3u8 = os.path.join(self._tempdir.name, filename + ".m3u8")
+        filename_old = os.path.join(self._tempdir.name, filename + ".m4a")
         cmd_old = cmd_base.copy()
         cmd_old.insert(1, "-protocol_whitelist")
         cmd_old.insert(2, "file,https,tls,tcp")
@@ -131,12 +135,12 @@ class TwspaceDL:
         logging.debug("Command for the old part: %s", " ".join(cmd_old))
 
         if state == "Running":
-            filename_new = os.path.join(tempdir, filename + "_new.m4a")
+            filename_new = os.path.join(self._tempdir.name, filename + "_new.m4a")
             cmd_new = cmd_base.copy()
             cmd_new.insert(6, (self.dyn_url))
             cmd_new.append(filename_new)
 
-            concat_fn = os.path.join(tempdir, "list.txt")
+            concat_fn = os.path.join(self._tempdir.name, "list.txt")
             with open(concat_fn, "w", encoding="utf-8") as list_io:
                 list_io.write(
                     "file "
