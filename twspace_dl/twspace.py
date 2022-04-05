@@ -1,22 +1,24 @@
 """Provide an interface with twitter spaces"""
+from __future__ import annotations
+
 import json
 import logging
 import os
 import re
 from collections import defaultdict
 from datetime import datetime
+from typing import Any, DefaultDict, Dict
 
 import requests
 
 from twspace_dl.twitter import guest_token, twitter_user_id
 
 
-class Twspace(dict):
+class Twspace(dict[str, Any]):
     """Downloader class for twitter spaces"""
 
-    def __init__(self, metadata: dict) -> None:
-        dict.__init__(
-            self,
+    def __init__(self, metadata: Dict[str, Any]) -> None:
+        super().__init__(
             {
                 "id": "",
                 "url": "",
@@ -30,7 +32,9 @@ class Twspace(dict):
             },
         )
         if metadata:
-            root = defaultdict(str, metadata["data"]["audioSpace"]["metadata"])
+            root: DefaultDict[str, Any] = defaultdict(
+                str, metadata["data"]["audioSpace"]["metadata"]
+            )
             creator_info = root["creator_results"]["result"]["legacy"]  # type: ignore
 
             self.source = metadata
@@ -56,7 +60,7 @@ class Twspace(dict):
             self["media_key"] = root["media_key"]
 
     @staticmethod
-    def _metadata(space_id) -> dict:
+    def _metadata(space_id: str) -> Dict[str, Any]:
         params = {
             "variables": (
                 "{"
@@ -163,7 +167,7 @@ class Twspace(dict):
         return os.path.join(abs_dir, basename)
 
     @classmethod
-    def from_space_url(cls, url: str):
+    def from_space_url(cls, url: str) -> Twspace:
         """Create a Twspace instance from a space url"""
         try:
             space_id = re.findall(r"(?<=spaces/)\w*", url)[0]
@@ -177,7 +181,7 @@ class Twspace(dict):
         return cls(cls._metadata(space_id))
 
     @classmethod
-    def from_user_tweets(cls, url: str):
+    def from_user_tweets(cls, url: str) -> Twspace:
         """Create a Twspace instance from the first space
         found in the 20 last user tweets"""
         user_id = twitter_user_id(url)
@@ -223,7 +227,7 @@ class Twspace(dict):
         return cls(cls._metadata(space_id))
 
     @classmethod
-    def from_user_avatar(cls, user_url, auth_token):
+    def from_user_avatar(cls, user_url: str, auth_token: str) -> Twspace:
         """Create a Twspace instance from a twitter user's ongoing space"""
         headers = {
             "authorization": (
@@ -252,7 +256,7 @@ class Twspace(dict):
         return cls(cls._metadata(broadcast_id))
 
     @classmethod
-    def from_file(cls, path: str):
+    def from_file(cls, path: str) -> Twspace:
         """Create a Twspace instance from a metadata file"""
         with open(path, "r", encoding="utf-8") as metadata_io:
             return cls(json.load(metadata_io))

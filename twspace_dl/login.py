@@ -1,6 +1,7 @@
 "Module providing login utilities for twspace_dl"
 import re
 from datetime import datetime, timedelta
+from typing import Any, Dict
 
 import requests
 
@@ -44,7 +45,7 @@ def write_to_file(auth_token: str, filename: str) -> None:
 class Login:
     """Helper class to login to twitter"""
 
-    def __init__(self, username, password, guest_token):
+    def __init__(self, username: str, password: str, guest_token: str):
         self.username = username
         self.password = password
         self.guest_token = guest_token
@@ -64,7 +65,7 @@ class Login:
         }
 
     @property
-    def _initial_params(self) -> dict:
+    def _initial_params(self) -> Dict[str, Any]:
         return {
             "input_flow_data": {
                 "flow_context": {
@@ -82,7 +83,7 @@ class Login:
         }
 
     @property
-    def _js_instrumentation_data(self) -> dict:
+    def _js_instrumentation_data(self) -> Dict[str, Any]:
         return {
             "flow_token": self.flow_token,
             "subtask_inputs": [
@@ -113,7 +114,7 @@ class Login:
         }
 
     @property
-    def _user_identifier_sso_data(self) -> dict:
+    def _user_identifier_sso_data(self) -> Dict[str, Any]:
         # assert self.flow_token[-1] == "1"
         return {
             "flow_token": self.flow_token,
@@ -136,7 +137,7 @@ class Login:
         }
 
     @property
-    def _login_alternate_identifier(self) -> dict:
+    def _login_alternate_identifier(self) -> Dict[str, Any]:
         return {
             "flow_token": self.flow_token,
             "subtask_inputs": [
@@ -148,7 +149,7 @@ class Login:
         }
 
     @property
-    def _account_dup_check_data(self) -> dict:
+    def _account_dup_check_data(self) -> Dict[str, Any]:
         # assert self.flow_token[-1] == "2"
         return {
             "flow_token": self.flow_token,
@@ -163,7 +164,7 @@ class Login:
         }
 
     @property
-    def _enter_password_data(self) -> dict:
+    def _enter_password_data(self) -> Dict[str, Any]:
         # assert self.flow_token[-1] == "6"
         return {
             "flow_token": self.flow_token,
@@ -176,7 +177,7 @@ class Login:
         }
 
     @property
-    def _enter_2fa(self) -> dict:
+    def _enter_2fa(self) -> Dict[str, Any]:
         # assert self.flow_token[-1] == "6"
         return {
             "flow_token": self.flow_token,
@@ -240,7 +241,7 @@ class Login:
         # enter password
         request_flow = self.session.post(
             self.task_url, headers=self._headers, json=self._enter_password_data
-        )
+        ).json()
         if "auth_token" in request_flow.cookies.keys():
             return str(request_flow.cookies["auth_token"])
         if (
@@ -269,7 +270,7 @@ class Login:
         # 2FA
         request_flow = self.session.post(
             self.task_url, headers=self._headers, json=self._enter_2fa
-        )
+        ).json()
         if "auth_token" in request_flow.cookies.keys():
             print("Success!")
             return str(request_flow.cookies["auth_token"])
