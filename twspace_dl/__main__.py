@@ -21,7 +21,7 @@ EXIT_CODE_MISUSE = 2
 def exception_hook(
     _: Type[BaseException],
     exc_value: BaseException,
-    _t: TracebackType = None,
+    _t: TracebackType,
 ) -> None:
     """Make Exceptions more legible for the end users"""
     # Exception type and value
