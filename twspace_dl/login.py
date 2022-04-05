@@ -241,9 +241,9 @@ class Login:
         # enter password
         request_flow = self.session.post(
             self.task_url, headers=self._headers, json=self._enter_password_data
-        ).json()
-        if "auth_token" in request_flow.cookies.keys():
-            return str(request_flow.cookies["auth_token"])
+        )
+        if "auth_token" in request_flow.cookies.keys():  # type: ignore
+            return str(request_flow.cookies["auth_token"])  # type: ignore
         if (
             "LoginTwoFactorAuthChallenge" in request_flow.text
             or "AccountDuplicationCheck" in request_flow.text
@@ -270,8 +270,8 @@ class Login:
         # 2FA
         request_flow = self.session.post(
             self.task_url, headers=self._headers, json=self._enter_2fa
-        ).json()
-        if "auth_token" in request_flow.cookies.keys():
+        )
+        if "auth_token" in request_flow.cookies.keys():  # type: ignore
             print("Success!")
-            return str(request_flow.cookies["auth_token"])
+            return str(request_flow.cookies["auth_token"])  # type: ignore
         raise RuntimeError("Login failed after 2FA. Error message: ", request_flow.text)
