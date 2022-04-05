@@ -21,7 +21,7 @@ def guest_token() -> str:
     return token
 
 
-def user_id(user_url: str) -> str:
+def twitter_user_id(user_url: str) -> str:
     """Get the id of a twitter using the url linking to their account"""
     screen_name = re.findall(r"(?<=twitter.com/)\w*", user_url)[0]
     params = {"screen_names": screen_name}

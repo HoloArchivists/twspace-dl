@@ -8,7 +8,7 @@ from datetime import datetime
 
 import requests
 
-from . import twitter
+from twspace_dl.twitter import guest_token, twitter_user_id
 
 
 class Twspace(dict):
@@ -79,7 +79,7 @@ class Twspace(dict):
                 "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
                 "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
             ),
-            "x-guest-token": twitter.guest_token(),
+            "x-guest-token": guest_token(),
         }
         response = requests.get(
             "https://twitter.com/i/api/graphql/jyQ0_DEMZHeoluCgHJ-U5Q/AudioSpaceById",
@@ -180,14 +180,14 @@ class Twspace(dict):
     def from_user_tweets(cls, url: str):
         """Create a Twspace instance from the first space
         found in the 20 last user tweets"""
-        user_id = twitter.user_id(url)
+        user_id = twitter_user_id(url)
         headers = {
             "authorization": (
                 "Bearer "
                 "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
                 "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
             ),
-            "x-guest-token": twitter.guest_token(),
+            "x-guest-token": guest_token(),
         }
         params = {
             "variables": (
@@ -233,7 +233,7 @@ class Twspace(dict):
             ),
             "cookie": f"auth_token={auth_token};",
         }
-        user_id = twitter.user_id(user_url)
+        user_id = twitter_user_id(user_url)
         params = {"user_ids": user_id, "only_spaces": "true"}
         avatar_content = requests.get(
             "https://twitter.com/i/api/fleets/v1/avatar_content",
