@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 from types import TracebackType
-from typing import Iterable, Type
+from typing import Iterable, Optional, Type
 
 from twspace_dl.login import Login, is_expired, load_from_file, write_to_file
 from twspace_dl.twitter import guest_token
@@ -21,7 +21,7 @@ EXIT_CODE_MISUSE = 2
 def exception_hook(
     _: Type[BaseException],
     exc_value: BaseException,
-    _t: TracebackType = None,
+    _t: Optional[TracebackType] = None,
 ) -> None:
     """Make Exceptions more legible for the end users"""
     # Exception type and value
