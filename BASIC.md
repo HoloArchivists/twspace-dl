@@ -1,5 +1,12 @@
 This guide is targeted towards total 'noobs' as prompted by https://github.com/HoloArchivists/twspace-dl/issues/57
 
+# 0. Requirements
+For the software to work you have to set up ffmpeg because it uses it
+
+You can find a guide for that there https://video.stackexchange.com/a/20496
+
+It explains the process better than I could 
+
 # 1. Download
 The first step is to download the software
 
