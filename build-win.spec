@@ -9,9 +9,9 @@ block_cipher = None
 a = Analysis(
     ["twspace_dl/__main__.py"],  # replace me with your path
     pathex=["./twspace_dl/__main__.py"],
-    binaries=["./ffmpeg.exe"],
+    binaries=[("./ffmpeg.exe", ".")],
     datas=[],
-    hiddenimports=[],
+    hiddenimports=["requests"],
     hookspath=[],
     runtime_hooks=[],
     excludes=[],
@@ -28,7 +28,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name="main",
+    name="twspace-dl",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

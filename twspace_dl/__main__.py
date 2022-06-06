@@ -248,9 +248,6 @@ def main() -> int:
         widget="FileChooser",
     )
     parser.set_defaults(func=space)
-    if len(sys.argv) == 1:
-        parser.print_help(sys.stderr)
-        return EXIT_CODE_ERROR
     args = parser.parse_args()
     args.func(args)
     return EXIT_CODE_SUCCESS
