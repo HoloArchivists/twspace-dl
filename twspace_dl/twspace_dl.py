@@ -171,6 +171,7 @@ class TwspaceDL:
                 subprocess.run(cmd_old, check=True)
             except subprocess.CalledProcessError as err:
                 raise RuntimeError(" ".join(err.cmd)) from err
+            os.makedirs(os.path.dirname(self.filename), exist_ok=True)
             shutil.move(filename_old, self.filename + ".m4a")
 
         logging.info("Finished downloading")

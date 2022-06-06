@@ -22,6 +22,7 @@ class Twspace(dict):
                 "url": "",
                 "title": "",
                 "creator_name": "",
+                "creator_id": "",
                 "creator_screen_name": "",
                 "start_date": "",
                 "state": "",
@@ -54,6 +55,9 @@ class Twspace(dict):
             self["state"] = root["state"]
             self["available_for_replay"] = root["is_space_available_for_replay"]
             self["media_key"] = root["media_key"]
+            self["creator_id"] = twitter.user_id(
+                "https://twitter.com/" + creator_info["screen_name"]
+            )
 
     @staticmethod
     def _metadata(space_id) -> dict:
@@ -158,7 +162,7 @@ class Twspace(dict):
     def format(self, format_str: str) -> str:
         """Use metadata to fill in the fields in format str"""
         actual_format_str = os.path.basename(format_str)
-        abs_dir = os.path.dirname(format_str)
+        abs_dir = os.path.dirname(format_str) % self
         basename = self.sterilize_fn(actual_format_str % self)
         return os.path.join(abs_dir, basename)
 
