@@ -4,9 +4,9 @@ import datetime
 import json
 import logging
 import os
-import shutil
 import sys
-from typing import Iterable
+from types import TracebackType
+from typing import Iterable, Type
 
 from gooey import Gooey, GooeyParser
 
@@ -15,8 +15,22 @@ from twspace_dl.twitter import guest_token
 from twspace_dl.twspace import Twspace
 from twspace_dl.twspace_dl import TwspaceDL
 
+EXIT_CODE_SUCCESS = 0
+EXIT_CODE_ERROR = 1
+EXIT_CODE_MISUSE = 2
 
-def space(args: argparse.Namespace) -> None:
+
+def exception_hook(
+    _: Type[BaseException],
+    exc_value: BaseException,
+    _t: TracebackType = None,
+) -> None:
+    """Make Exceptions more legible for the end users"""
+    # Exception type and value
+    print(f"\033[31;1;4mError\033[0m: {exc_value}\nRetry with -v to see more details")
+
+
+def space(args: argparse.Namespace) -> int:
     """Manage the twitter space related function"""
     has_input = (
         args.user_url
@@ -30,7 +44,7 @@ def space(args: argparse.Namespace) -> None:
         print(
             "Either user url, space url, dynamic url or master url should be provided"
         )
-        sys.exit(2)
+        return EXIT_CODE_MISUSE
 
     if args.log:
         log_filename = datetime.datetime.now().strftime(
@@ -43,11 +57,19 @@ def space(args: argparse.Namespace) -> None:
     else:
         handlers = None
 
-    logging.basicConfig(
-        level=logging.DEBUG if args.verbose else logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(message)s",
-        handlers=handlers,
-    )
+    if not args.verbose:
+        sys.excepthook = exception_hook
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(levelname)s: %(message)s",
+            handlers=handlers,
+        )
+    else:
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(asctime)s [%(levelname)s] %(message)s",
+            handlers=handlers,
+        )
 
     auth_token = ""
     if has_login:
@@ -67,8 +89,17 @@ def space(args: argparse.Namespace) -> None:
             twspace = Twspace.from_user_tweets(args.user_url)
     elif args.input_metadata:
         twspace = Twspace.from_file(args.input_metadata)
-    else:
+    elif args.input_url:
         twspace = Twspace.from_space_url(args.input_url)
+    else:
+        logging.warning(
+            (
+                "No metadata provided.\n"
+                "The resulting file won't be associated with the original space.\n"
+                "Please consider adding a space url or a metadata file"
+            )
+        )
+        twspace = Twspace({})
     twspace_dl = TwspaceDL(twspace, args.output)
 
     if args.from_dynamic_url:
@@ -85,7 +116,7 @@ def space(args: argparse.Namespace) -> None:
         print(twspace_dl.master_url)
     if args.write_url:
         with open(args.write_url, "a", encoding="utf-8") as url_output:
-            url_output.write(twspace_dl.master_url)
+            url_output.write("{}\n".format(twspace_dl.master_url))
     if args.write_playlist:
         twspace_dl.write_playlist()
 
@@ -93,10 +124,11 @@ def space(args: argparse.Namespace) -> None:
         try:
             twspace_dl.download()
         except KeyboardInterrupt:
-            logging.info("Download Interrupted")
+            logging.info("Download Interrupted by user")
         finally:
-            if not args.keep_files and os.path.exists(twspace_dl._tmpdir):
-                shutil.rmtree(twspace_dl._tmpdir)
+            if not args.keep_files and os.path.exists(twspace_dl.tempdir.name):
+                twspace_dl.tempdir.cleanup()
+    return EXIT_CODE_SUCCESS
 
 
 @Gooey(
@@ -105,7 +137,7 @@ def space(args: argparse.Namespace) -> None:
     tabbed_groups=True,
     disable_progress_bar_animation=True,
 )
-def main() -> None:
+def main() -> int:
     """Main function, creates the argument parser"""
     parser = GooeyParser(description="App designed to help download twitter spaces")
 
@@ -216,8 +248,12 @@ def main() -> None:
         widget="FileChooser",
     )
     parser.set_defaults(func=space)
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stderr)
+        return EXIT_CODE_ERROR
     args = parser.parse_args()
     args.func(args)
+    return EXIT_CODE_SUCCESS
 
 
 if __name__ == "__main__":

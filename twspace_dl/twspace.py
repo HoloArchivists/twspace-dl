@@ -22,6 +22,7 @@ class Twspace(dict):
                 "url": "",
                 "title": "",
                 "creator_name": "",
+                "creator_id": "",
                 "creator_screen_name": "",
                 "start_date": "",
                 "state": "",
@@ -29,31 +30,34 @@ class Twspace(dict):
                 "media_key": "",
             },
         )
+        if metadata:
+            root = defaultdict(str, metadata["data"]["audioSpace"]["metadata"])
+            creator_info = root["creator_results"]["result"]["legacy"]  # type: ignore
 
-        root = defaultdict(str, metadata["data"]["audioSpace"]["metadata"])
-        creator_info = root["creator_results"]["result"]["legacy"]  # type: ignore
-
-        self.source = metadata
-        self.root = root
-        self["id"] = root["rest_id"]
-        self["url"] = "https://twitter.com/i/spaces/" + self["id"]
-        self["title"] = root["title"]
-        self["creator_name"] = creator_info["name"]  # type: ignore
-        self["creator_screen_name"] = creator_info["screen_name"]  # type: ignore
-        try:
-            self["start_date"] = datetime.fromtimestamp(
-                int(root["started_at"]) / 1000
-            ).strftime("%Y-%m-%d")
-        except ValueError as err:
-            sched_start = datetime.fromtimestamp(
-                int(root["scheduled_start"]) / 1000
-            ).strftime("%Y-%m-%d %H:%M:%S")
-            raise ValueError(
-                f"Space should start at {sched_start}, try again later"
-            ) from err
-        self["state"] = root["state"]
-        self["available_for_replay"] = root["is_space_available_for_replay"]
-        self["media_key"] = root["media_key"]
+            self.source = metadata
+            self.root = root
+            self["id"] = root["rest_id"]
+            self["url"] = "https://twitter.com/i/spaces/" + self["id"]
+            self["title"] = root["title"]
+            self["creator_name"] = creator_info["name"]  # type: ignore
+            self["creator_screen_name"] = creator_info["screen_name"]  # type: ignore
+            try:
+                self["start_date"] = datetime.fromtimestamp(
+                    int(root["started_at"]) / 1000
+                ).strftime("%Y-%m-%d")
+            except ValueError as err:
+                sched_start = datetime.fromtimestamp(
+                    int(root["scheduled_start"]) / 1000
+                ).strftime("%Y-%m-%d %H:%M:%S")
+                raise ValueError(
+                    f"Space should start at {sched_start}, try again later"
+                ) from err
+            self["state"] = root["state"]
+            self["available_for_replay"] = root["is_space_available_for_replay"]
+            self["media_key"] = root["media_key"]
+            self["creator_id"] = twitter.user_id(
+                "https://twitter.com/" + creator_info["screen_name"]
+            )
 
     @staticmethod
     def _metadata(space_id) -> dict:
@@ -89,10 +93,10 @@ class Twspace(dict):
         metadata = response.json()
         try:
             media_key = metadata["data"]["audioSpace"]["metadata"]["media_key"]
-            logging.debug(media_key)
+            logging.debug("Media Key: %s", media_key)
         except KeyError as error:
             logging.error(metadata)
-            raise RuntimeError(metadata) from error
+            raise ValueError("Media Key not available.\nUser is not live") from error
         return metadata
 
     # https://gist.github.com/dbr/256270
@@ -158,7 +162,7 @@ class Twspace(dict):
     def format(self, format_str: str) -> str:
         """Use metadata to fill in the fields in format str"""
         actual_format_str = os.path.basename(format_str)
-        abs_dir = os.path.dirname(format_str)
+        abs_dir = os.path.dirname(format_str) % self
         basename = self.sterilize_fn(actual_format_str % self)
         return os.path.join(abs_dir, basename)
 
@@ -168,7 +172,12 @@ class Twspace(dict):
         try:
             space_id = re.findall(r"(?<=spaces/)\w*", url)[0]
         except IndexError as err:
-            raise ValueError("Input URL is not valid") from err
+            raise ValueError(
+                (
+                    "Input URL is not valid.\n"
+                    "The URL format should 'https://twitter.com/i/spaces/<space_id>'"
+                )
+            ) from err
         return cls(cls._metadata(space_id))
 
     @classmethod
@@ -212,7 +221,9 @@ class Twspace(dict):
         try:
             space_id = re.findall(r"(?<=https://twitter.com/i/spaces/)\w*", tweets)[0]
         except (IndexError, json.JSONDecodeError) as err:
-            raise RuntimeError("User is not live") from err
+            raise RuntimeError(
+                "User hasn't tweeted a space, retry with cookies"
+            ) from err
         return cls(cls._metadata(space_id))
 
     @classmethod
@@ -239,7 +250,9 @@ class Twspace(dict):
                 "audiospace"
             ]["broadcast_id"]
         except KeyError as err:
-            raise ValueError("User is not live") from err
+            raise ValueError(
+                "Broadcast ID is not available.\nUser is probably not live"
+            ) from err
         return cls(cls._metadata(broadcast_id))
 
     @classmethod

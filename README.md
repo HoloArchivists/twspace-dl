@@ -133,6 +133,7 @@ You can use the following identifiers for the formatting
 %(creator_name)s
 %(creator_screen_name)s
 %(url)s
+%(creator_id)s
 ```
 
 Example: `[%(creator_screen_name)s]-%(title)s|%(start_date)s`
@@ -154,7 +155,7 @@ To run as a systemd service please refer to https://github.com/HoloArchivists/tw
 > Use ${pwd} in powershell, or $(pwd) in bash
 
 ```bash
-docker run --rm -v ${pwd}:/output HoloArchivists/twspace-dl -i space_url
+docker run --rm -v ${pwd}:/output ryu1845/twspace-dl -i space_url
 ```
 
 ### Run as monitoring service
