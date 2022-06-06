@@ -133,6 +133,7 @@ You can use the following identifiers for the formatting
 %(creator_name)s
 %(creator_screen_name)s
 %(url)s
+%(creator_id)s
 ```
 
 Example: `[%(creator_screen_name)s]-%(title)s|%(start_date)s`
