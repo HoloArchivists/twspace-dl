@@ -18,15 +18,29 @@
 
 ## Requirements
 
-ffmpeg
+ffmpeg if not using portable binaries
 
 ## Install
 
+### GUI
+
+Use this if you're not sure.
+
 ### From portable binaries
 
-[Linux](https://github.com/HoloArchivists/twspace-dl/releases/latest/download/twspace_dl.bin)
+[Windows](https://github.com/HoloArchivists/twspace-dl/releases/latest/download/twspace-dl-GUI.exe)
 
-[Windows](https://github.com/HoloArchivists/twspace-dl/releases/latest/download/twspace_dl.exe)
+### From source
+
+```bash
+pip install git+https://github.com/HoloArchivists/twspace-dl@gooey
+```
+
+### CLI
+
+### From portable binaries
+
+[Windows](https://github.com/HoloArchivists/twspace-dl/releases/latest/download/twspace-dl-CLI.exe)
 
 ### From PyPI
 
@@ -53,12 +67,6 @@ twspace_dl -i space_url
 
 ```bash
 .\twspace_dl.exe -i space_url
-```
-
-### Linux
-
-```bash
-./twspace_dl.bin -i space_url
 ```
 
 </details>
