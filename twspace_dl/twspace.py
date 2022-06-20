@@ -7,6 +7,7 @@ from collections import defaultdict
 from datetime import datetime
 
 import requests
+from requests.exceptions import JSONDecodeError
 
 from . import twitter
 
@@ -239,11 +240,31 @@ class Twspace(dict):
         }
         user_id = twitter.user_id(user_url)
         params = {"user_ids": user_id, "only_spaces": "true"}
-        avatar_content = requests.get(
+        avatar_content_res = requests.get(
             "https://twitter.com/i/api/fleets/v1/avatar_content",
             params=params,
             headers=headers,
-        ).json()
+        )
+        if avatar_content_res.ok:
+            avatar_content = avatar_content_res.json()
+        else:
+            logging.debug(avatar_content_res.text)
+            if avatar_content_res.status_code == requests.codes.too_many:
+                raise ValueError(
+                    (
+                        "Response status code is 429! "
+                        "You hit Twitter's ratelimit, retry later."
+                    )
+                )
+            if 400 <= avatar_content_res.status_code < 500:
+                raise ValueError(
+                    "Response code is in the 4XX range. Bad request on our side"
+                )
+            if avatar_content_res.status_code >= 500:
+                raise ValueError(
+                    "Response code is over 500. There was an error on Twitter's side"
+                )
+            raise ValueError("Can't get proper response")
 
         try:
             broadcast_id = avatar_content["users"][user_id]["spaces"]["live_content"][
