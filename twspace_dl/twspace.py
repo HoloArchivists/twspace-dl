@@ -1,23 +1,25 @@
 """Provide an interface with twitter spaces"""
+from __future__ import annotations
+
 import json
 import logging
 import os
 import re
 from collections import defaultdict
 from datetime import datetime
+from typing import Any, DefaultDict, Dict
 
 import requests
 from requests.exceptions import JSONDecodeError
 
-from . import twitter
+from twspace_dl.twitter import guest_token, twitter_user_id
 
 
-class Twspace(dict):
+class Twspace(dict[str, Any]):
     """Downloader class for twitter spaces"""
 
-    def __init__(self, metadata: dict) -> None:
-        dict.__init__(
-            self,
+    def __init__(self, metadata: Dict[str, Any]) -> None:
+        super().__init__(
             {
                 "id": "",
                 "url": "",
@@ -32,7 +34,9 @@ class Twspace(dict):
             },
         )
         if metadata:
-            root = defaultdict(str, metadata["data"]["audioSpace"]["metadata"])
+            root: DefaultDict[str, Any] = defaultdict(
+                str, metadata["data"]["audioSpace"]["metadata"]
+            )
             creator_info = root["creator_results"]["result"]["legacy"]  # type: ignore
 
             self.source = metadata
@@ -61,7 +65,7 @@ class Twspace(dict):
             )
 
     @staticmethod
-    def _metadata(space_id) -> dict:
+    def _metadata(space_id: str) -> Dict[str, Any]:
         params = {
             "variables": (
                 "{"
@@ -84,7 +88,7 @@ class Twspace(dict):
                 "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
                 "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
             ),
-            "x-guest-token": twitter.guest_token(),
+            "x-guest-token": guest_token(),
         }
         response = requests.get(
             "https://twitter.com/i/api/graphql/jyQ0_DEMZHeoluCgHJ-U5Q/AudioSpaceById",
@@ -168,7 +172,7 @@ class Twspace(dict):
         return os.path.join(abs_dir, basename)
 
     @classmethod
-    def from_space_url(cls, url: str):
+    def from_space_url(cls, url: str) -> Twspace:
         """Create a Twspace instance from a space url"""
         try:
             space_id = re.findall(r"(?<=spaces/)\w*", url)[0]
@@ -182,17 +186,17 @@ class Twspace(dict):
         return cls(cls._metadata(space_id))
 
     @classmethod
-    def from_user_tweets(cls, url: str):
+    def from_user_tweets(cls, url: str) -> Twspace:
         """Create a Twspace instance from the first space
         found in the 20 last user tweets"""
-        user_id = twitter.user_id(url)
+        user_id = twitter_user_id(url)
         headers = {
             "authorization": (
                 "Bearer "
                 "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
                 "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
             ),
-            "x-guest-token": twitter.guest_token(),
+            "x-guest-token": guest_token(),
         }
         params = {
             "variables": (
@@ -228,7 +232,7 @@ class Twspace(dict):
         return cls(cls._metadata(space_id))
 
     @classmethod
-    def from_user_avatar(cls, user_url, auth_token):
+    def from_user_avatar(cls, user_url: str, auth_token: str) -> Twspace:
         """Create a Twspace instance from a twitter user's ongoing space"""
         headers = {
             "authorization": (
@@ -238,7 +242,7 @@ class Twspace(dict):
             ),
             "cookie": f"auth_token={auth_token};",
         }
-        user_id = twitter.user_id(user_url)
+        user_id = twitter_user_id(user_url)
         params = {"user_ids": user_id, "only_spaces": "true"}
         avatar_content_res = requests.get(
             "https://twitter.com/i/api/fleets/v1/avatar_content",
@@ -277,7 +281,7 @@ class Twspace(dict):
         return cls(cls._metadata(broadcast_id))
 
     @classmethod
-    def from_file(cls, path: str):
+    def from_file(cls, path: str) -> Twspace:
         """Create a Twspace instance from a metadata file"""
         with open(path, "r", encoding="utf-8") as metadata_io:
             return cls(json.load(metadata_io))
