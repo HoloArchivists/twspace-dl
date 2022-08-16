@@ -25,6 +25,9 @@ class Twspace(dict):
                 "creator_id": "",
                 "creator_screen_name": "",
                 "start_date": "",
+                "start_year": "",
+                "start_month": "",
+                "start_day": "",
                 "state": "",
                 "available_for_replay": "",
                 "media_key": "",
@@ -45,9 +48,9 @@ class Twspace(dict):
             self["url"] = "https://twitter.com/i/spaces/" + self["id"]
             self["title"] = root["title"]
             try:
-                self["start_date"] = datetime.fromtimestamp(
+                start_at = datetime.fromtimestamp(
                     int(root["started_at"]) / 1000
-                ).strftime("%Y-%m-%d")
+                )
             except ValueError as err:
                 sched_start = datetime.fromtimestamp(
                     int(root["scheduled_start"]) / 1000
@@ -55,6 +58,10 @@ class Twspace(dict):
                 raise ValueError(
                     f"Space should start at {sched_start}, try again later"
                 ) from err
+            self["start_date"] = start_at.strftime("%Y-%m-%d")
+            self["start_year"] = start_at.strftime("%Y")
+            self["start_month"] = start_at.strftime("%m")
+            self["start_day"] = start_at.strftime("%d")
             self["state"] = root["state"]
             self["available_for_replay"] = root["is_space_available_for_replay"]
             self["media_key"] = root["media_key"]
