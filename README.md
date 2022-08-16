@@ -159,6 +159,9 @@ You can use the following identifiers for the formatting
 %(title)s
 %(id)s
 %(start_date)s
+%(start_year)s
+%(start_month)s
+%(start_day)s
 %(creator_name)s
 %(creator_screen_name)s
 %(url)s
