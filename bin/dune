@@ -1,0 +1,5 @@
+(executable
+ (public_name twspace_dl)
+ (name twspace_dl)
+ (libraries cmdliner base)
+ (preprocess (pps ppx_regexp)))

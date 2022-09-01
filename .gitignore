@@ -4,6 +4,5 @@
 *.json
 *.log
 tmp*
-__pycache__
-.python-version
 cookies.txt
+_build

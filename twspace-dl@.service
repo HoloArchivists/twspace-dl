@@ -1,9 +1,0 @@
-[Unit]
-Description=Automated download for twitter space by %i
-After=network-online.target
-
-[Service]
-WorkingDirectory=/path/to/twspace-dl
-ExecStart=/usr/bin/python twspace_dl -U https://twitter.com/%i
-Restart=always
-RestartSec=15
