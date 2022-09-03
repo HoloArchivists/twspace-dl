@@ -14,7 +14,10 @@ depends: [
   "dune" {>= "3.4"}
   "cmdliner"
   "ppx_regexp"
-  "base"
+  "cohttp"
+  "cohttp-lwt-unix"
+  "lwt"
+  "yojson"
   "odoc" {with-doc}
 ]
 build: [

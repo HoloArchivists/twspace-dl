@@ -19,7 +19,7 @@
  (name twspace_dl)
  (synopsis "A downloader for Twitter Spaces")
  (description "A longer description")
- (depends ocaml dune cmdliner ppx_regexp base)
+ (depends ocaml dune cmdliner ppx_regexp cohttp cohttp-lwt-unix lwt yojson)
  (tags
   (topics "to describe" your project)))
 
