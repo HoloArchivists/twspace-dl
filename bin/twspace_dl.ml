@@ -3,6 +3,7 @@ let version = "2.0.0"
 
 open Metadata
 open Download
+open Input
 
 (* Command line interface *)
 
@@ -36,12 +37,24 @@ let download_cmd =
 let metadata_cmd =
   let doc = "Utility to save twitter space metadata" in
   let info = Cmd.info "metadata" ~doc in
-  Cmd.v info Term.(const metadata $ const ())
+  let func input = match input_parsing input with
+    | Ok Space x -> Lwt_main.run (x |> metadata_json) |> Yojson.Safe.pretty_print Format.std_formatter
+    | Error `Msg x -> print_endline x; exit 123
+    | _ -> print_endline "Metadata only works with space URLs"; exit 123
+  in
+  Cmd.v info Term.(const func $ input)
 
 let url_cmd =
   let doc = "Utility to get the media url of a twitter space (to play it in a media player for example)" in
   let info = Cmd.info "url" ~doc in
-  Cmd.v info Term.(const url $ const ())
+  let func input = match input_parsing input with
+    | Ok x -> (match x with
+        | Space x -> Lwt_main.run (Lwt_main.run(x |> metadata_json) |> metadata |> url) |> print_endline
+        | MetadataPath x -> Lwt_main.run (x |> Yojson.Safe.from_file |> metadata |> url) |> print_endline
+        | Dynamic _ -> print_endline "Metadata only works with space URLs and metadata files"; exit 123)
+    | Error `Msg x -> print_endline x; exit 123
+  in
+  Cmd.v info Term.(const func $ input)
 
 let main_cmd =
   let doc = "a revision control system" in

@@ -18,6 +18,7 @@ depends: [
   "cohttp-lwt-unix"
   "lwt"
   "yojson"
+  "re"
   "odoc" {with-doc}
 ]
 build: [
