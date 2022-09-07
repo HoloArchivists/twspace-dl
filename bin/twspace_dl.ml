@@ -51,7 +51,7 @@ let url_cmd =
     | Ok x -> (match x with
         | Space x -> Lwt_main.run (Lwt_main.run(x |> metadata_json) |> metadata |> url) |> print_endline
         | MetadataPath x -> Lwt_main.run (x |> Yojson.Safe.from_file |> metadata |> url) |> print_endline
-        | Dynamic _ -> print_endline "Metadata only works with space URLs and metadata files"; exit 123)
+        | Playlist _ -> print_endline "Metadata only works with space URLs and metadata files"; exit 123)
     | Error `Msg x -> print_endline x; exit 123
   in
   Cmd.v info Term.(const func $ input)

@@ -19,6 +19,7 @@ depends: [
   "lwt"
   "yojson"
   "re"
+  "ppx_string"
   "odoc" {with-doc}
 ]
 build: [

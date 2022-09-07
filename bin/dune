@@ -1,5 +1,5 @@
 (executable
  (public_name twspace_dl)
  (name twspace_dl)
- (libraries cmdliner base lwt cohttp cohttp-lwt-unix yojson)
- (preprocess (pps ppx_regexp)))
+ (libraries cmdliner base lwt cohttp cohttp-lwt-unix yojson re)
+ (preprocess (pps ppx_regexp ppx_string)))
