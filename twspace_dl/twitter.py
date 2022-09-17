@@ -13,7 +13,7 @@ def guest_token() -> str:
         )
     }
     response = requests.post(
-        "https://api.twitter.com/1.1/guest/activate.json", headers=headers
+        "https://api.twitter.com/1.1/guest/activate.json", headers=headers, timeout=30
     ).json()
     token = response["guest_token"]
     if not token:
@@ -28,6 +28,7 @@ def user_id(user_url: str) -> str:
     response = requests.get(
         "https://cdn.syndication.twimg.com/widgets/followbutton/info.json",
         params=params,
+        timeout=30,
     )
     user_data = response.json()
     usr_id = user_data[0]["id"]
