@@ -8,7 +8,7 @@ from functools import cached_property
 from urllib.parse import urlparse
 
 import requests
-from requests.adapters import Retry, HTTPAdapter
+from requests.adapters import HTTPAdapter, Retry
 
 from .twspace import Twspace
 
@@ -22,7 +22,9 @@ class TwspaceDL:
         self.space = space
         self.format_str = format_str or DEFAULT_FNAME_FORMAT
         self.session = requests.Session()
-        self.session.mount('https://', HTTPAdapter(max_retries=(Retry(total=5, backoff_factor=0.1))))
+        self.session.mount(
+            "https://", HTTPAdapter(max_retries=(Retry(total=5, backoff_factor=0.1)))
+        )
         self._tempdir = tempfile.TemporaryDirectory(dir=".")
 
     @cached_property
