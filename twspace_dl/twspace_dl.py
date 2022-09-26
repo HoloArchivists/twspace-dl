@@ -109,6 +109,9 @@ class TwspaceDL:
         if not shutil.which("ffmpeg"):
             raise FileNotFoundError("ffmpeg not installed")
         space = self.space
+        if os.path.exists(self.filename + ".m4a"):
+            logging.info("%s has already been downloaded", self.filename + ".m4a")
+            return
         self.write_playlist(save_dir=self._tempdir.name)
         state = space["state"]
 
