@@ -21,7 +21,7 @@ class TwspaceDL:
         self.space = space
         self.format_str = format_str or DEFAULT_FNAME_FORMAT
         self.session = requests.Session()
-        self._tempdir = tempfile.TemporaryDirectory(dir=".")
+        self._tempdir = tempfile.mkdtemp(dir=".")
 
     @cached_property
     def filename(self) -> str:
@@ -104,7 +104,7 @@ class TwspaceDL:
         if not shutil.which("ffmpeg"):
             raise FileNotFoundError("ffmpeg not installed")
         space = self.space
-        self.write_playlist(save_dir=self._tempdir.name)
+        self.write_playlist(save_dir=self._tempdir)
         state = space["state"]
 
         cmd_base = [
@@ -125,8 +125,8 @@ class TwspaceDL:
         ]
 
         filename = os.path.basename(self.filename)
-        filename_m3u8 = os.path.join(self._tempdir.name, filename + ".m3u8")
-        filename_old = os.path.join(self._tempdir.name, filename + ".m4a")
+        filename_m3u8 = os.path.join(self._tempdir, filename + ".m3u8")
+        filename_old = os.path.join(self._tempdir, filename + ".m4a")
         cmd_old = cmd_base.copy()
         cmd_old.insert(1, "-protocol_whitelist")
         cmd_old.insert(2, "file,https,tls,tcp")
@@ -135,12 +135,12 @@ class TwspaceDL:
         logging.debug("Command for the old part: %s", " ".join(cmd_old))
 
         if state == "Running":
-            filename_new = os.path.join(self._tempdir.name, filename + "_new.m4a")
+            filename_new = os.path.join(self._tempdir, filename + "_new.m4a")
             cmd_new = cmd_base.copy()
             cmd_new.insert(6, (self.dyn_url))
             cmd_new.append(filename_new)
 
-            concat_fn = os.path.join(self._tempdir.name, "list.txt")
+            concat_fn = os.path.join(self._tempdir, "list.txt")
             with open(concat_fn, "w", encoding="utf-8") as list_io:
                 list_io.write(
                     "file "
