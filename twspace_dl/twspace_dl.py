@@ -8,6 +8,7 @@ from functools import cached_property
 from urllib.parse import urlparse
 
 import requests
+from requests.adapters import HTTPAdapter, Retry
 
 from .twspace import Twspace
 
@@ -21,6 +22,9 @@ class TwspaceDL:
         self.space = space
         self.format_str = format_str or DEFAULT_FNAME_FORMAT
         self.session = requests.Session()
+        self.session.mount(
+            "https://", HTTPAdapter(max_retries=(Retry(total=5, backoff_factor=0.1)))
+        )
         self._tempdir = tempfile.mkdtemp(dir=".")
 
     @cached_property
@@ -50,9 +54,10 @@ class TwspaceDL:
             "cookie": "auth_token=",
         }
         media_key = space["media_key"]
-        response = requests.get(
+        response = self.session.get(
             "https://twitter.com/i/api/1.1/live_video_stream/status/" + media_key,
             headers=headers,
+            timeout=30,
         )
         try:
             metadata = response.json()
@@ -72,7 +77,7 @@ class TwspaceDL:
     @property
     def playlist_url(self) -> str:
         """Get the URL containing the chunks filenames"""
-        response = requests.get(self.master_url)
+        response = requests.get(self.master_url, timeout=30)
         playlist_suffix = response.text.splitlines()[3]
         domain = urlparse(self.master_url).netloc
         playlist_url = f"https://{domain}{playlist_suffix}"
@@ -81,7 +86,7 @@ class TwspaceDL:
     @property
     def playlist_text(self) -> str:
         """Modify the chunks URL using the master one to be able to download"""
-        playlist_text = requests.get(self.playlist_url).text
+        playlist_text = requests.get(self.playlist_url, timeout=30).text
         master_url_wo_file = re.sub(r"master_playlist\.m3u8.*", "", self.master_url)
         playlist_text = re.sub(r"(?=chunk)", master_url_wo_file, playlist_text)
         return playlist_text

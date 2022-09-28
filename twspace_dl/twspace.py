@@ -90,6 +90,7 @@ class Twspace(dict):
             "https://twitter.com/i/api/graphql/jyQ0_DEMZHeoluCgHJ-U5Q/AudioSpaceById",
             params=params,
             headers=headers,
+            timeout=30,
         )
         metadata = response.json()
         try:
@@ -216,6 +217,7 @@ class Twspace(dict):
             "https://twitter.com/i/api/graphql/jpCmlX6UgnPEZJknGKbmZA/UserTweets",
             params=params,
             headers=headers,
+            timeout=30,
         )
         tweets = response.text
 
@@ -244,6 +246,7 @@ class Twspace(dict):
             "https://twitter.com/i/api/fleets/v1/avatar_content",
             params=params,
             headers=headers,
+            timeout=30,
         )
         if avatar_content_res.ok:
             avatar_content = avatar_content_res.json()
