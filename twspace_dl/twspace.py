@@ -33,15 +33,18 @@ class Twspace(dict):
         )
         if metadata:
             root = defaultdict(str, metadata["data"]["audioSpace"]["metadata"])
-            creator_info = root["creator_results"]["result"]["legacy"]  # type: ignore
+            if creator_info := root["creator_results"]["result"].get("legacy"):# type: ignore
+                self["creator_name"] = creator_info["name"]  # type: ignore
+                self["creator_screen_name"] = creator_info["screen_name"]  # type: ignore
+                self["creator_id"] = twitter.user_id(
+                    "https://twitter.com/" + creator_info["screen_name"]
+                )
 
             self.source = metadata
             self.root = root
             self["id"] = root["rest_id"]
             self["url"] = "https://twitter.com/i/spaces/" + self["id"]
             self["title"] = root["title"]
-            self["creator_name"] = creator_info["name"]  # type: ignore
-            self["creator_screen_name"] = creator_info["screen_name"]  # type: ignore
             try:
                 self["start_date"] = datetime.fromtimestamp(
                     int(root["started_at"]) / 1000
@@ -56,9 +59,6 @@ class Twspace(dict):
             self["state"] = root["state"]
             self["available_for_replay"] = root["is_space_available_for_replay"]
             self["media_key"] = root["media_key"]
-            self["creator_id"] = twitter.user_id(
-                "https://twitter.com/" + creator_info["screen_name"]
-            )
 
     @staticmethod
     def _metadata(space_id) -> dict:
