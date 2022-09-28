@@ -33,7 +33,7 @@ class Twspace(dict):
         )
         if metadata:
             root = defaultdict(str, metadata["data"]["audioSpace"]["metadata"])
-            if creator_info := root["creator_results"]["result"].get("legacy"):# type: ignore
+            if creator_info := root["creator_results"]["result"].get("legacy"):  # type: ignore
                 self["creator_name"] = creator_info["name"]  # type: ignore
                 self["creator_screen_name"] = creator_info["screen_name"]  # type: ignore
                 self["creator_id"] = twitter.user_id(

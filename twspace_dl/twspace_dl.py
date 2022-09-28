@@ -175,7 +175,10 @@ class TwspaceDL:
             try:
                 subprocess.run(cmd_old, check=True)
             except subprocess.CalledProcessError as err:
-                raise RuntimeError(" ".join(err.cmd)+"\nThis might be a temporary error, retry in a few minutes") from err
+                raise RuntimeError(
+                    " ".join(err.cmd)
+                    + "\nThis might be a temporary error, retry in a few minutes"
+                ) from err
             if os.path.dirname(self.filename):
                 os.makedirs(os.path.dirname(self.filename), exist_ok=True)
             shutil.move(filename_old, self.filename + ".m4a")
