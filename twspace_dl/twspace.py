@@ -7,7 +7,6 @@ from collections import defaultdict
 from datetime import datetime
 
 import requests
-from requests.exceptions import JSONDecodeError
 
 from . import twitter
 
