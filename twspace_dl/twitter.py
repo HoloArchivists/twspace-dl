@@ -14,7 +14,9 @@ AUTH_HEADER = {
 def guest_token() -> str:
     """Generate a guest token to authorize twitter api requests"""
     response = requests.post(
-        "https://api.twitter.com/1.1/guest/activate.json", headers=AUTH_HEADER, timeout=30
+        "https://api.twitter.com/1.1/guest/activate.json",
+        headers=AUTH_HEADER,
+        timeout=30,
     ).json()
     token = response["guest_token"]
     if not token:
@@ -39,7 +41,7 @@ def user_id(user_url: str) -> str:
             '"verified_phone_label_enabled":false,'
             '"responsive_web_graphql_timeline_navigation_enabled":true'
             "}"
-        )
+        ),
     }
     response = requests.get(
         "https://api.twitter.com/graphql/hVhfo_TquFTmgL7gYwf91Q/UserByScreenName",
