@@ -4,6 +4,7 @@ import datetime
 import json
 import logging
 import os
+import shutil
 import sys
 from types import TracebackType
 from typing import Iterable, Type
@@ -126,8 +127,8 @@ def space(args: argparse.Namespace) -> int:
         except KeyboardInterrupt:
             logging.info("Download Interrupted by user")
         finally:
-            if not args.keep_files and os.path.exists(twspace_dl.tempdir.name):
-                twspace_dl.tempdir.cleanup()
+            if not args.keep_files and os.path.exists(twspace_dl.tempdir):
+                shutil.rmtree(twspace_dl.tempdir)
     return EXIT_CODE_SUCCESS
 
 

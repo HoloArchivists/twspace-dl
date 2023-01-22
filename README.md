@@ -16,17 +16,52 @@
   <p>A python module to download twitter spaces.</p>
 </div>
 
+## Screensots
+
+<details>
+<summary>GUI</summary>
+
+![general tab](https://user-images.githubusercontent.com/77058942/172580094-3663f86d-3ee2-48d0-9313-f4ed71f048aa.png)
+![input tab](https://user-images.githubusercontent.com/77058942/172580476-bb34dce0-08b0-41f6-852b-b68d32532add.png)
+![running tab](https://user-images.githubusercontent.com/77058942/172580589-fd6b05bd-f081-4c7a-ab05-0640abda00ce.png)
+![success pop up](https://user-images.githubusercontent.com/77058942/172580861-18b3ac9f-88d2-44cf-8b5d-135990a78f77.png)
+
+</details>
+
+<details>
+<summary>CLI</summary>
+
+![help](https://user-images.githubusercontent.com/77058942/172581224-9b465f78-4894-456f-9b85-5b76ee9bbfca.png)
+![running](https://user-images.githubusercontent.com/77058942/172581500-174834c5-6883-44f9-a0a7-610dbb2103e5.png)
+
+</details>
+
+
 ## Requirements
 
-ffmpeg
+ffmpeg if not using portable binaries
 
 ## Install
 
+### GUI
+
+Use this if you're not sure.
+
 ### From portable binaries
 
-[Linux](https://github.com/HoloArchivists/twspace-dl/releases/latest/download/twspace_dl.bin)
+[Windows](https://github.com/HoloArchivists/twspace-dl/releases/latest/download/twspace-dl-GUI.exe)
 
-[Windows](https://github.com/HoloArchivists/twspace-dl/releases/latest/download/twspace_dl.exe)
+### From source
+
+```bash
+pip install git+https://github.com/HoloArchivists/twspace-dl@gooey
+```
+
+### CLI
+
+### From portable binaries
+
+[Windows](https://github.com/HoloArchivists/twspace-dl/releases/latest/download/twspace-dl-CLI.exe)
 
 ### From PyPI
 
@@ -53,12 +88,6 @@ twspace_dl -i space_url
 
 ```bash
 .\twspace_dl.exe -i space_url
-```
-
-### Linux
-
-```bash
-./twspace_dl.bin -i space_url
 ```
 
 </details>

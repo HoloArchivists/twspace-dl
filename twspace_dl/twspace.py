@@ -32,15 +32,18 @@ class Twspace(dict):
         )
         if metadata:
             root = defaultdict(str, metadata["data"]["audioSpace"]["metadata"])
-            creator_info = root["creator_results"]["result"]["legacy"]  # type: ignore
+            if creator_info := root["creator_results"]["result"].get("legacy"):  # type: ignore
+                self["creator_name"] = creator_info["name"]  # type: ignore
+                self["creator_screen_name"] = creator_info["screen_name"]  # type: ignore
+                self["creator_id"] = twitter.user_id(
+                    "https://twitter.com/" + creator_info["screen_name"]
+                )
 
             self.source = metadata
             self.root = root
             self["id"] = root["rest_id"]
             self["url"] = "https://twitter.com/i/spaces/" + self["id"]
             self["title"] = root["title"]
-            self["creator_name"] = creator_info["name"]  # type: ignore
-            self["creator_screen_name"] = creator_info["screen_name"]  # type: ignore
             try:
                 self["start_date"] = datetime.fromtimestamp(
                     int(root["started_at"]) / 1000
@@ -55,9 +58,6 @@ class Twspace(dict):
             self["state"] = root["state"]
             self["available_for_replay"] = root["is_space_available_for_replay"]
             self["media_key"] = root["media_key"]
-            self["creator_id"] = twitter.user_id(
-                "https://twitter.com/" + creator_info["screen_name"]
-            )
 
     @staticmethod
     def _metadata(space_id) -> dict:
@@ -89,6 +89,7 @@ class Twspace(dict):
             "https://twitter.com/i/api/graphql/jyQ0_DEMZHeoluCgHJ-U5Q/AudioSpaceById",
             params=params,
             headers=headers,
+            timeout=30,
         )
         metadata = response.json()
         try:
@@ -215,6 +216,7 @@ class Twspace(dict):
             "https://twitter.com/i/api/graphql/jpCmlX6UgnPEZJknGKbmZA/UserTweets",
             params=params,
             headers=headers,
+            timeout=30,
         )
         tweets = response.text
 
@@ -239,11 +241,32 @@ class Twspace(dict):
         }
         user_id = twitter.user_id(user_url)
         params = {"user_ids": user_id, "only_spaces": "true"}
-        avatar_content = requests.get(
+        avatar_content_res = requests.get(
             "https://twitter.com/i/api/fleets/v1/avatar_content",
             params=params,
             headers=headers,
-        ).json()
+            timeout=30,
+        )
+        if avatar_content_res.ok:
+            avatar_content = avatar_content_res.json()
+        else:
+            logging.debug(avatar_content_res.text)
+            if avatar_content_res.status_code == requests.codes.too_many:
+                raise ValueError(
+                    (
+                        "Response status code is 429! "
+                        "You hit Twitter's ratelimit, retry later."
+                    )
+                )
+            if 400 <= avatar_content_res.status_code < 500:
+                raise ValueError(
+                    "Response code is in the 4XX range. Bad request on our side"
+                )
+            if avatar_content_res.status_code >= 500:
+                raise ValueError(
+                    "Response code is over 500. There was an error on Twitter's side"
+                )
+            raise ValueError("Can't get proper response")
 
         try:
             broadcast_id = avatar_content["users"][user_id]["spaces"]["live_content"][
