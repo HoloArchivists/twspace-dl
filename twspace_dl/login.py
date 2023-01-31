@@ -3,6 +3,7 @@ import re
 from datetime import datetime, timedelta
 
 import requests
+from requests.adapters import HTTPAdapter, Retry
 
 
 def is_expired(filename: str) -> bool:
@@ -49,6 +50,9 @@ class Login:
         self.password = password
         self.guest_token = guest_token
         self.session = requests.Session()
+        self.session.mount(
+            "https://", HTTPAdapter(max_retries=(Retry(total=5, backoff_factor=0.1)))
+        )
         self.task_url = "https://twitter.com/i/api/1.1/onboarding/task.json"
         self.flow_token: str
 
@@ -198,6 +202,7 @@ class Login:
             params={"flow_name": "login"},
             headers=self._headers,
             json=self._initial_params,
+            timeout=30,
         )
         try:
             self.flow_token = request_flow.json()["flow_token"]
@@ -208,7 +213,10 @@ class Login:
 
         # js instrumentation subtask
         request_flow = self.session.post(
-            self.task_url, headers=self._headers, json=self._js_instrumentation_data
+            self.task_url,
+            headers=self._headers,
+            json=self._js_instrumentation_data,
+            timeout=30,
         )
         try:
             self.flow_token = request_flow.json()["flow_token"]
@@ -219,7 +227,10 @@ class Login:
 
         # user identifier sso subtask
         request_flow = self.session.post(
-            self.task_url, headers=self._headers, json=self._user_identifier_sso_data
+            self.task_url,
+            headers=self._headers,
+            json=self._user_identifier_sso_data,
+            timeout=30,
         )
         try:
             self.flow_token = request_flow.json()["flow_token"]
@@ -228,7 +239,10 @@ class Login:
 
         # alternate identifier
         request_flow = self.session.post(
-            self.task_url, headers=self._headers, json=self._login_alternate_identifier
+            self.task_url,
+            headers=self._headers,
+            json=self._login_alternate_identifier,
+            timeout=30,
         ).json()
         if "flow_token" in request_flow.keys():
             self.flow_token = request_flow["flow_token"]
@@ -239,7 +253,10 @@ class Login:
 
         # enter password
         request_flow = self.session.post(
-            self.task_url, headers=self._headers, json=self._enter_password_data
+            self.task_url,
+            headers=self._headers,
+            json=self._enter_password_data,
+            timeout=30,
         )
         if "auth_token" in request_flow.cookies.keys():
             return str(request_flow.cookies["auth_token"])
@@ -255,7 +272,10 @@ class Login:
 
         # account duplication check
         request_flow = self.session.post(
-            self.task_url, headers=self._headers, json=self._account_dup_check_data
+            self.task_url,
+            headers=self._headers,
+            json=self._account_dup_check_data,
+            timeout=30,
         ).json()
         if "auth_token" in request_flow.cookies.keys():
             return str(request_flow.cookies["auth_token"])
@@ -268,7 +288,7 @@ class Login:
 
         # 2FA
         request_flow = self.session.post(
-            self.task_url, headers=self._headers, json=self._enter_2fa
+            self.task_url, headers=self._headers, json=self._enter_2fa, timeout=30
         )
         if "auth_token" in request_flow.cookies.keys():
             print("Success!")

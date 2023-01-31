@@ -8,6 +8,7 @@ from functools import cached_property
 from urllib.parse import urlparse
 
 import requests
+from requests.adapters import HTTPAdapter, Retry
 
 from .twspace import Twspace
 
@@ -21,7 +22,10 @@ class TwspaceDL:
         self.space = space
         self.format_str = format_str or DEFAULT_FNAME_FORMAT
         self.session = requests.Session()
-        self._tempdir = tempfile.TemporaryDirectory(dir=".")
+        self.session.mount(
+            "https://", HTTPAdapter(max_retries=(Retry(total=5, backoff_factor=0.1)))
+        )
+        self._tempdir = tempfile.mkdtemp(dir=".")
 
     @cached_property
     def filename(self) -> str:
@@ -50,9 +54,10 @@ class TwspaceDL:
             "cookie": "auth_token=",
         }
         media_key = space["media_key"]
-        response = requests.get(
+        response = self.session.get(
             "https://twitter.com/i/api/1.1/live_video_stream/status/" + media_key,
             headers=headers,
+            timeout=30,
         )
         try:
             metadata = response.json()
@@ -72,7 +77,7 @@ class TwspaceDL:
     @property
     def playlist_url(self) -> str:
         """Get the URL containing the chunks filenames"""
-        response = requests.get(self.master_url)
+        response = requests.get(self.master_url, timeout=30)
         playlist_suffix = response.text.splitlines()[3]
         domain = urlparse(self.master_url).netloc
         playlist_url = f"https://{domain}{playlist_suffix}"
@@ -81,7 +86,7 @@ class TwspaceDL:
     @property
     def playlist_text(self) -> str:
         """Modify the chunks URL using the master one to be able to download"""
-        playlist_text = requests.get(self.playlist_url).text
+        playlist_text = requests.get(self.playlist_url, timeout=30).text
         master_url_wo_file = re.sub(r"master_playlist\.m3u8.*", "", self.master_url)
         playlist_text = re.sub(r"(?=chunk)", master_url_wo_file, playlist_text)
         return playlist_text
@@ -104,7 +109,7 @@ class TwspaceDL:
         if not shutil.which("ffmpeg"):
             raise FileNotFoundError("ffmpeg not installed")
         space = self.space
-        self.write_playlist(save_dir=self._tempdir.name)
+        self.write_playlist(save_dir=self._tempdir)
         state = space["state"]
 
         cmd_base = [
@@ -125,8 +130,8 @@ class TwspaceDL:
         ]
 
         filename = os.path.basename(self.filename)
-        filename_m3u8 = os.path.join(self._tempdir.name, filename + ".m3u8")
-        filename_old = os.path.join(self._tempdir.name, filename + ".m4a")
+        filename_m3u8 = os.path.join(self._tempdir, filename + ".m3u8")
+        filename_old = os.path.join(self._tempdir, filename + ".m4a")
         cmd_old = cmd_base.copy()
         cmd_old.insert(1, "-protocol_whitelist")
         cmd_old.insert(2, "file,https,tls,tcp")
@@ -135,12 +140,12 @@ class TwspaceDL:
         logging.debug("Command for the old part: %s", " ".join(cmd_old))
 
         if state == "Running":
-            filename_new = os.path.join(self._tempdir.name, filename + "_new.m4a")
+            filename_new = os.path.join(self._tempdir, filename + "_new.m4a")
             cmd_new = cmd_base.copy()
             cmd_new.insert(6, (self.dyn_url))
             cmd_new.append(filename_new)
 
-            concat_fn = os.path.join(self._tempdir.name, "list.txt")
+            concat_fn = os.path.join(self._tempdir, "list.txt")
             with open(concat_fn, "w", encoding="utf-8") as list_io:
                 list_io.write(
                     "file "
@@ -170,7 +175,10 @@ class TwspaceDL:
             try:
                 subprocess.run(cmd_old, check=True)
             except subprocess.CalledProcessError as err:
-                raise RuntimeError(" ".join(err.cmd)) from err
+                raise RuntimeError(
+                    " ".join(err.cmd)
+                    + "\nThis might be a temporary error, retry in a few minutes"
+                ) from err
             if os.path.dirname(self.filename):
                 os.makedirs(os.path.dirname(self.filename), exist_ok=True)
             shutil.move(filename_old, self.filename + ".m4a")
