@@ -46,7 +46,7 @@ def user_id(user_url: str) -> str:
     response = requests.get(
         "https://api.twitter.com/graphql/hVhfo_TquFTmgL7gYwf91Q/UserByScreenName",
         params=params,
-        headers=AUTH_HEADER | {"x-guest-token": guest_token()},
+        headers={**AUTH_HEADER, "x-guest-token": guest_token()},
         timeout=30,
     ).json()
     usr_id = response["data"]["user"]["result"]["rest_id"]
