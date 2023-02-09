@@ -1,3 +1,4 @@
+import logging
 import re
 import tempfile
 import time
@@ -34,8 +35,11 @@ def guest_token(refresh: bool = False) -> str:
                 timeout=30,
             ).json()
             if GUEST_TOKEN := response["guest_token"]:
-                with open(GUEST_TOKEN_FILE, "w") as f:
-                    f.write(GUEST_TOKEN)
+                try:
+                    with open(GUEST_TOKEN_FILE, "w") as f:
+                        f.write(GUEST_TOKEN)
+                except OSError as e:
+                    logging.error(e)
             else:
                 raise RuntimeError("No guest token found after five retry")
     return GUEST_TOKEN
