@@ -48,22 +48,15 @@ def user_id(user_url: str) -> str:
         "variables": (
             "{"
             f'"screen_name":"{screen_name}",'
-            '"withSafetyModeUserFields":true,'
-            '"withSuperFollowsUserFields":true'
+            '"withSafetyModeUserFields":false,'
+            '"withSuperFollowsUserFields":false'
             "}"
-        ),
-        "features": (
-            "{"
-            '"responsive_web_twitter_blue_verified_badge_is_enabled":true,'
-            '"verified_phone_label_enabled":false,'
-            '"responsive_web_graphql_timeline_navigation_enabled":true'
-            "}"
-        ),
+        )
     }
     session = requests.Session()
     req = requests.Request(
         "GET",
-        "https://api.twitter.com/graphql/hVhfo_TquFTmgL7gYwf91Q/UserByScreenName",
+        "https://twitter.com/i/api/graphql/7mjxD3-C6BxitPMVQ6w0-Q/UserByScreenName",
         params=params,
         headers={**AUTH_HEADER, "x-guest-token": guest_token()}
     ).prepare()
