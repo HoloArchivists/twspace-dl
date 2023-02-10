@@ -181,7 +181,7 @@ To run as a systemd service please refer to https://github.com/HoloArchivists/tw
 
 ### Run once
 
-> Use ${pwd} in powershell, or $(pwd) in bash
+> Use `${pwd}` in powershell, or `$(pwd)` in bash
 
 ```bash
 docker run --rm -v ${pwd}:/output ryu1845/twspace-dl -i space_url
