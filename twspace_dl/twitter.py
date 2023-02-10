@@ -6,7 +6,6 @@ from os.path import getmtime, join
 
 import requests
 
-
 AUTH_HEADER = {
     "authorization": (
         "Bearer "
@@ -24,7 +23,10 @@ def guest_token(refresh: bool = False) -> str:
     global GUEST_TOKEN
     if not GUEST_TOKEN or refresh:
         try:
-            if refresh or time.time() - getmtime(GUEST_TOKEN_FILE) > GUEST_TOKEN_TIMEOUT:
+            if (
+                refresh
+                or time.time() - getmtime(GUEST_TOKEN_FILE) > GUEST_TOKEN_TIMEOUT
+            ):
                 raise FileNotFoundError
             with open(GUEST_TOKEN_FILE) as f:
                 GUEST_TOKEN = f.read()
@@ -62,7 +64,7 @@ def user_id(user_url: str) -> str:
         "GET",
         "https://twitter.com/i/api/graphql/7mjxD3-C6BxitPMVQ6w0-Q/UserByScreenName",
         params=params,
-        headers={**AUTH_HEADER, "x-guest-token": guest_token()}
+        headers={**AUTH_HEADER, "x-guest-token": guest_token()},
     ).prepare()
     response = session.send(req, timeout=30)
     if response.status_code == requests.codes.too_many_requests:
