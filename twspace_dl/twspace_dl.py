@@ -25,7 +25,7 @@ class TwspaceDL:
         self.session.mount(
             "https://", HTTPAdapter(max_retries=(Retry(total=5, backoff_factor=0.1)))
         )
-        self._tempdir = tempfile.mkdtemp(dir=".")
+        self._tempdir = ""
 
     @cached_property
     def filename(self) -> str:
@@ -99,16 +99,12 @@ class TwspaceDL:
             stream_io.write(self.playlist_text)
         logging.debug("%(path)s written to disk", dict(path=path))
 
-    @property
-    def tempdir(self):
-        """Return tempdir"""
-        return self._tempdir
-
     def download(self) -> None:
         """Download a twitter space"""
         if not shutil.which("ffmpeg"):
             raise FileNotFoundError("ffmpeg not installed")
         space = self.space
+        self._tempdir = tempfile.mkdtemp(dir=".")
         self.write_playlist(save_dir=self._tempdir)
         state = space["state"]
 
@@ -184,3 +180,7 @@ class TwspaceDL:
             shutil.move(filename_old, self.filename + ".m4a")
 
         logging.info("Finished downloading")
+
+    def cleanup(self):
+        if os.path.exists(self._tempdir):
+            shutil.rmtree(self._tempdir)
