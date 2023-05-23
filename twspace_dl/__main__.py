@@ -120,6 +120,8 @@ def space(args: argparse.Namespace) -> int:
     if not args.skip_download:
         try:
             twspace_dl.download()
+            if args.embed_cover:
+                twspace_dl.embed_cover()
         except KeyboardInterrupt:
             logging.info("Download Interrupted by user")
         finally:
@@ -221,6 +223,9 @@ def main() -> int:
     )
     output_group.add_argument(
         "--write-url", type=str, metavar="URL_OUTPUT", help="write master url to file"
+    )
+    output_group.add_argument(
+        "-e", "--embed-cover", action="store_true", help="embed user avatar as cover art"
     )
     parser.set_defaults(func=space)
     if len(sys.argv) == 1:

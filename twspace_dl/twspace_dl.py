@@ -8,11 +8,16 @@ from functools import cached_property
 from urllib.parse import urlparse
 
 import requests
+from mutagen.mp4 import MP4, MP4Cover
 from requests.adapters import HTTPAdapter, Retry
 
 from .twspace import Twspace
 
 DEFAULT_FNAME_FORMAT = "(%(creator_name)s)%(title)s-%(id)s"
+MP4_COVER_FORMAT_MAP = {
+    "jpg": MP4Cover.FORMAT_JPEG,
+    "png": MP4Cover.FORMAT_PNG
+}
 
 
 class TwspaceDL:
@@ -180,6 +185,20 @@ class TwspaceDL:
             shutil.move(filename_old, self.filename + ".m4a")
 
         logging.info("Finished downloading")
+
+    def embed_cover(self):
+        cover_url = self.space["creator_profile_image_url"]
+        cover_ext = cover_url.split(".")[-1]
+        response = self.session.get(cover_url)
+        if response.status_code == requests.codes.ok:
+            if cover_format := MP4_COVER_FORMAT_MAP.get(cover_ext):
+                meta = MP4(f"{self.filename}.m4a")
+                meta.tags["covr"] = [MP4Cover(response.content, imageformat=cover_format)]
+                meta.save()
+            else:
+                logging.error(f"Unsupported user profile image format: {cover_ext}")
+        else:
+            logging.error(f"Cannot download user profile image from URL: {cover_url}")
 
     def cleanup(self):
         if os.path.exists(self._tempdir):
