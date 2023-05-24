@@ -225,7 +225,10 @@ def main() -> int:
         "--write-url", type=str, metavar="URL_OUTPUT", help="write master url to file"
     )
     output_group.add_argument(
-        "-e", "--embed-cover", action="store_true", help="embed user avatar as cover art"
+        "-e",
+        "--embed-cover",
+        action="store_true",
+        help="embed user avatar as cover art",
     )
     parser.set_defaults(func=space)
     if len(sys.argv) == 1:

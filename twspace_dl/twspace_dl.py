@@ -14,10 +14,7 @@ from requests.adapters import HTTPAdapter, Retry
 from .twspace import Twspace
 
 DEFAULT_FNAME_FORMAT = "(%(creator_name)s)%(title)s-%(id)s"
-MP4_COVER_FORMAT_MAP = {
-    "jpg": MP4Cover.FORMAT_JPEG,
-    "png": MP4Cover.FORMAT_PNG
-}
+MP4_COVER_FORMAT_MAP = {"jpg": MP4Cover.FORMAT_JPEG, "png": MP4Cover.FORMAT_PNG}
 
 
 class TwspaceDL:
@@ -194,7 +191,9 @@ class TwspaceDL:
         if response.status_code == requests.codes.ok:
             if cover_format := MP4_COVER_FORMAT_MAP.get(cover_ext):
                 meta = MP4(f"{self.filename}.m4a")
-                meta.tags["covr"] = [MP4Cover(response.content, imageformat=cover_format)]
+                meta.tags["covr"] = [
+                    MP4Cover(response.content, imageformat=cover_format)
+                ]
                 meta.save()
             else:
                 logging.error(f"Unsupported user profile image format: {cover_ext}")
