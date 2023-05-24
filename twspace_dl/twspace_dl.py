@@ -187,6 +187,7 @@ class TwspaceDL:
         logging.info("Finished downloading")
 
     def embed_cover(self):
+        """Embed the user profile image as the cover art"""
         cover_url = self.space["creator_profile_image_url"]
         cover_ext = cover_url.split(".")[-1]
         response = self.session.get(cover_url)

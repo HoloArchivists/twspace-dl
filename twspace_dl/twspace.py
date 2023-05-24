@@ -36,7 +36,7 @@ class Twspace(dict):
             if creator_info := root["creator_results"]["result"].get("legacy"):  # type: ignore
                 self["creator_name"] = creator_info["name"]  # type: ignore
                 self["creator_screen_name"] = creator_info["screen_name"]  # type: ignore
-                self["creator_profile_image_url"] = creator_info["profile_image_url_https"].replace("_normal", "")
+                self["creator_profile_image_url"] = creator_info["profile_image_url_https"].replace("_normal", "")  # type: ignore
                 self["creator_id"] = twitter.user_id(
                     "https://twitter.com/" + creator_info["screen_name"]
                 )
