@@ -114,7 +114,7 @@ class TwspaceDL:
         filename_old = os.path.join(self._tempdir, filename + ".m4a")
         cmd_old = cmd_base.copy()
         cmd_old.insert(1, "-protocol_whitelist")
-        cmd_old.insert(2, "file,https,tls,tcp")
+        cmd_old.insert(2, "file,https,httpproxy,tls,tcp")
         cmd_old.insert(8, filename_m3u8)
         cmd_old.append(filename_old)
         logging.debug("Command for the old part: %s", " ".join(cmd_old))
