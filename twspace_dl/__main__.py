@@ -7,8 +7,8 @@ import sys
 from types import TracebackType
 from typing import Iterable, Type
 
-from twspace_dl.login import Login, is_expired, load_from_file, write_to_file
-from twspace_dl.twitter import guest_token
+from twspace_dl.api import API
+from twspace_dl.cookies import CookiesLoader
 from twspace_dl.twspace import Twspace
 from twspace_dl.twspace_dl import TwspaceDL
 
@@ -36,7 +36,6 @@ def space(args: argparse.Namespace) -> int:
         or args.from_dynamic_url
         or args.from_master_url
     )
-    has_login = (args.username and args.password) or args.input_cookie_file
     if not has_input:
         print(
             "Either user url, space url, dynamic url or master url should be provided"
@@ -68,36 +67,30 @@ def space(args: argparse.Namespace) -> int:
             handlers=handlers,
         )
 
-    auth_token = ""
-    if has_login:
-        if args.input_cookie_file:
-            if args.username and args.password and is_expired(args.input_cookie_file):
-                auth_token = Login(args.username, args.password, guest_token()).login()
-                write_to_file(auth_token, args.output_cookie_file)
-            else:
-                auth_token = load_from_file(args.input_cookie_file)
-        else:
-            auth_token = Login(args.username, args.password, guest_token()).login()
+    if args.input_cookie_file:
+        cookies = CookiesLoader.load(args.input_cookie_file)
+        API.init_apis(cookies)
 
-    if args.user_url:
-        if auth_token:
-            twspace = Twspace.from_user_avatar(args.user_url, auth_token)
+    if API:
+        if args.user_url:
+            twspace = Twspace.from_user_avatar(args.user_url)
+        elif args.input_metadata:
+            twspace = Twspace.from_file(args.input_metadata)
+        elif args.input_url:
+            twspace = Twspace.from_space_url(args.input_url)
         else:
-            twspace = Twspace.from_user_tweets(args.user_url)
-    elif args.input_metadata:
-        twspace = Twspace.from_file(args.input_metadata)
-    elif args.input_url:
-        twspace = Twspace.from_space_url(args.input_url)
-    else:
-        logging.warning(
-            (
-                "No metadata provided.\n"
-                "The resulting file won't be associated with the original space.\n"
-                "Please consider adding a space url or a metadata file"
+            logging.warning(
+                (
+                    "No metadata provided.\n"
+                    "The resulting file won't be associated with the original space.\n"
+                    "Please consider adding a space url or a metadata file"
+                )
             )
-        )
-        twspace = Twspace({})
-    twspace_dl = TwspaceDL(twspace, args.output)
+            twspace = Twspace({})
+        twspace_dl = TwspaceDL(twspace, args.output)
+    else:
+        logging.error("Due to Twitter API change, users must login to access it. Please provide a cookies file in Netscape format with the `--input-cookie-file` option.")
+        raise RuntimeError("Cannot load cookies from file")
 
     if args.from_dynamic_url:
         twspace_dl.dyn_url = args.from_dynamic_url

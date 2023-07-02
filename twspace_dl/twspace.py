@@ -6,9 +6,7 @@ import re
 from collections import defaultdict
 from datetime import datetime
 
-import requests
-
-from . import twitter
+from .api import API
 
 
 class Twspace(dict):
@@ -37,9 +35,7 @@ class Twspace(dict):
                 self["creator_name"] = creator_info["name"]  # type: ignore
                 self["creator_screen_name"] = creator_info["screen_name"]  # type: ignore
                 self["creator_profile_image_url"] = creator_info["profile_image_url_https"].replace("_normal", "")  # type: ignore
-                self["creator_id"] = twitter.user_id(
-                    "https://twitter.com/" + creator_info["screen_name"]
-                )
+                self["creator_id"] = API.graphql_api.user_id(creator_info["screen_name"])
 
             self.source = metadata
             self.root = root
@@ -62,38 +58,8 @@ class Twspace(dict):
             self["media_key"] = root["media_key"]
 
     @staticmethod
-    def _metadata(space_id) -> dict:
-        params = {
-            "variables": (
-                "{"
-                f'"id":"{space_id}",'
-                '"isMetatagsQuery":false,'
-                '"withSuperFollowsUserFields":true,'
-                '"withUserResults":true,'
-                '"withBirdwatchPivots":false,'
-                '"withReactionsMetadata":false,'
-                '"withReactionsPerspective":false,'
-                '"withSuperFollowsTweetFields":true,'
-                '"withReplays":true,'
-                '"withScheduledSpaces":true'
-                "}"
-            )
-        }
-        headers = {
-            "authorization": (
-                "Bearer "
-                "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
-                "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
-            ),
-            "x-guest-token": twitter.guest_token(),
-        }
-        response = requests.get(
-            "https://twitter.com/i/api/graphql/jyQ0_DEMZHeoluCgHJ-U5Q/AudioSpaceById",
-            params=params,
-            headers=headers,
-            timeout=30,
-        )
-        metadata = response.json()
+    def _metadata(space_id: str) -> dict:
+        metadata = API.graphql_api.audio_space_by_id(space_id)
         try:
             media_key = metadata["data"]["audioSpace"]["metadata"]["media_key"]
             logging.debug("Media Key: %s", media_key)
@@ -184,92 +150,10 @@ class Twspace(dict):
         return cls(cls._metadata(space_id))
 
     @classmethod
-    def from_user_tweets(cls, url: str):
-        """Create a Twspace instance from the first space
-        found in the 20 last user tweets"""
-        user_id = twitter.user_id(url)
-        headers = {
-            "authorization": (
-                "Bearer "
-                "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
-                "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
-            ),
-            "x-guest-token": twitter.guest_token(),
-        }
-        params = {
-            "variables": (
-                "{"
-                f'"userId":"{user_id}",'
-                '"count":20,'
-                '"withTweetQuoteCount":true,'
-                '"includePromotedContent":true,'
-                '"withQuickPromoteEligibilityTweetFields":false,'
-                '"withSuperFollowsUserFields":true,'
-                '"withUserResults":true,'
-                '"withNftAvatar":false,'
-                '"withBirdwatchPivots":false,'
-                '"withReactionsMetadata":false,'
-                '"withReactionsPerspective":false,'
-                '"withSuperFollowsTweetFields":true,'
-                '"withVoice":true}'
-            )
-        }
-        response = requests.get(
-            "https://twitter.com/i/api/graphql/jpCmlX6UgnPEZJknGKbmZA/UserTweets",
-            params=params,
-            headers=headers,
-            timeout=30,
-        )
-        tweets = response.text
-
-        try:
-            space_id = re.findall(r"(?<=https://twitter.com/i/spaces/)\w*", tweets)[0]
-        except (IndexError, json.JSONDecodeError) as err:
-            raise RuntimeError(
-                "User hasn't tweeted a space, retry with cookies"
-            ) from err
-        return cls(cls._metadata(space_id))
-
-    @classmethod
-    def from_user_avatar(cls, user_url, auth_token):
+    def from_user_avatar(cls, user_url: str):
         """Create a Twspace instance from a twitter user's ongoing space"""
-        headers = {
-            "authorization": (
-                "Bearer "
-                "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
-                "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
-            ),
-            "cookie": f"auth_token={auth_token};",
-        }
-        user_id = twitter.user_id(user_url)
-        params = {"user_ids": user_id, "only_spaces": "true"}
-        avatar_content_res = requests.get(
-            "https://twitter.com/i/api/fleets/v1/avatar_content",
-            params=params,
-            headers=headers,
-            timeout=30,
-        )
-        if avatar_content_res.ok:
-            avatar_content = avatar_content_res.json()
-        else:
-            logging.debug(avatar_content_res.text)
-            if avatar_content_res.status_code == requests.codes.too_many:
-                raise ValueError(
-                    (
-                        "Response status code is 429! "
-                        "You hit Twitter's ratelimit, retry later."
-                    )
-                )
-            if 400 <= avatar_content_res.status_code < 500:
-                raise ValueError(
-                    "Response code is in the 4XX range. Bad request on our side"
-                )
-            if avatar_content_res.status_code >= 500:
-                raise ValueError(
-                    "Response code is over 500. There was an error on Twitter's side"
-                )
-            raise ValueError("Can't get proper response")
-
+        user_id = API.graphql_api.user_id_from_url(user_url)
+        avatar_content = API.fleets_api.avatar_content(user_id)
         try:
             broadcast_id = avatar_content["users"][user_id]["spaces"]["live_content"][
                 "audiospace"

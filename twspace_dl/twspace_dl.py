@@ -7,10 +7,9 @@ import tempfile
 from functools import cached_property
 from urllib.parse import urlparse
 
-import requests
 from mutagen.mp4 import MP4, MP4Cover
-from requests.adapters import HTTPAdapter, Retry
 
+from .api import API
 from .twspace import Twspace
 
 DEFAULT_FNAME_FORMAT = "(%(creator_name)s)%(title)s-%(id)s"
@@ -23,10 +22,6 @@ class TwspaceDL:
     def __init__(self, space: Twspace, format_str: str) -> None:
         self.space = space
         self.format_str = format_str or DEFAULT_FNAME_FORMAT
-        self.session = requests.Session()
-        self.session.mount(
-            "https://", HTTPAdapter(max_retries=(Retry(total=5, backoff_factor=0.1)))
-        )
         self._tempdir = ""
 
     @cached_property
@@ -47,22 +42,9 @@ class TwspaceDL:
                 )
             )
             raise ValueError("Space Ended")
-        headers = {
-            "authorization": (
-                "Bearer "
-                "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
-                "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
-            ),
-            "cookie": "auth_token=",
-        }
         media_key = space["media_key"]
-        response = self.session.get(
-            "https://twitter.com/i/api/1.1/live_video_stream/status/" + media_key,
-            headers=headers,
-            timeout=30,
-        )
         try:
-            metadata = response.json()
+            metadata = API.live_video_stream_api.status(media_key)
         except Exception as err:
             raise RuntimeError("Space isn't available", space.source) from err
         dyn_url = metadata["source"]["location"]
@@ -79,7 +61,7 @@ class TwspaceDL:
     @property
     def playlist_url(self) -> str:
         """Get the URL containing the chunks filenames"""
-        response = requests.get(self.master_url, timeout=30)
+        response = API.client.get(self.master_url)
         playlist_suffix = response.text.splitlines()[3]
         domain = urlparse(self.master_url).netloc
         playlist_url = f"https://{domain}{playlist_suffix}"
@@ -88,7 +70,7 @@ class TwspaceDL:
     @property
     def playlist_text(self) -> str:
         """Modify the chunks URL using the master one to be able to download"""
-        playlist_text = requests.get(self.playlist_url, timeout=30).text
+        playlist_text = API.client.get(self.playlist_url).text
         master_url_wo_file = re.sub(r"master_playlist\.m3u8.*", "", self.master_url)
         playlist_text = re.sub(r"(?=chunk)", master_url_wo_file, playlist_text)
         return playlist_text
@@ -187,8 +169,8 @@ class TwspaceDL:
         """Embed the user profile image as the cover art"""
         cover_url = self.space["creator_profile_image_url"]
         cover_ext = cover_url.split(".")[-1]
-        response = self.session.get(cover_url)
-        if response.status_code == requests.codes.ok:
+        try:
+            response = API.client.get(cover_url)
             if cover_format := MP4_COVER_FORMAT_MAP.get(cover_ext):
                 meta = MP4(f"{self.filename}.m4a")
                 meta.tags["covr"] = [
@@ -197,8 +179,9 @@ class TwspaceDL:
                 meta.save()
             else:
                 logging.error(f"Unsupported user profile image format: {cover_ext}")
-        else:
+        except RuntimeError:
             logging.error(f"Cannot download user profile image from URL: {cover_url}")
+            raise
 
     def cleanup(self):
         if os.path.exists(self._tempdir):
