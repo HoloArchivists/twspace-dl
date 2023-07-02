@@ -165,7 +165,7 @@ class TwspaceDL:
 
         logging.info("Finished downloading")
 
-    def embed_cover(self):
+    def embed_cover(self) -> None:
         """Embed the user profile image as the cover art"""
         cover_url = self.space["creator_profile_image_url"]
         cover_ext = cover_url.split(".")[-1]
@@ -183,6 +183,6 @@ class TwspaceDL:
             logging.error(f"Cannot download user profile image from URL: {cover_url}")
             raise
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         if os.path.exists(self._tempdir):
             shutil.rmtree(self._tempdir)

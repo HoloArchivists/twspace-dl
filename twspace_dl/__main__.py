@@ -5,7 +5,7 @@ import json
 import logging
 import sys
 from types import TracebackType
-from typing import Iterable, Type
+from typing import Type
 
 from twspace_dl.api import API
 from twspace_dl.cookies import CookiesLoader
@@ -46,10 +46,10 @@ def space(args: argparse.Namespace) -> int:
         log_filename = datetime.datetime.now().strftime(
             ".twspace-dl.%Y-%m-%d_%H-%M-%S_%f.log"
         )
-        handlers = [
+        handlers: list[logging.Handler] | None = [
             logging.FileHandler(log_filename),
             logging.StreamHandler(),
-        ]  # type: Iterable[logging.Handler] | None
+        ]
     else:
         handlers = None
 
@@ -98,15 +98,13 @@ def space(args: argparse.Namespace) -> int:
         twspace_dl.master_url = args.from_master_url
 
     if args.write_metadata:
-        metadata = json.dumps(twspace.source, indent=4)
-        filename = twspace_dl.filename
-        with open(f"{filename}.json", "w", encoding="utf-8") as metadata_io:
-            metadata_io.write(metadata)
+        with open(f"{twspace_dl.filename}.json", "w", encoding="utf-8") as metadata_io:
+            json.dump(twspace.source, metadata_io, indent=4)
     if args.url:
         print(twspace_dl.master_url)
     if args.write_url:
         with open(args.write_url, "a", encoding="utf-8") as url_output:
-            url_output.write("{}\n".format(twspace_dl.master_url))
+            url_output.write(f"{twspace_dl.master_url}\n")
     if args.write_playlist:
         twspace_dl.write_playlist()
 
