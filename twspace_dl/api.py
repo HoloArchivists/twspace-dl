@@ -1,7 +1,7 @@
 import json
 import logging
 import re
-from typing import Any
+from typing import Any, NoReturn
 
 import requests
 from requests.adapters import HTTPAdapter, Retry
@@ -171,12 +171,21 @@ class LiveVideoStreamAPI(APIClient):
         return super().get(self.join_url("status", media_key))
 
 
+class DummyAPI:
+    def __init__(self) -> None:
+        pass
+
+    def __getattr__(self, name: str) -> NoReturn:
+        raise RuntimeError("APIs are not initialized")
+
+    def __bool__(self) -> False:
+        return False
+
+
 class TwitterAPI:
     def __init__(self) -> None:
         self.client = HTTPClient()
-        self.graphql_api = None
-        self.fleets_api = None
-        self.live_video_stream_api = None
+        self.graphql_api = self.fleets_api = self.live_video_stream_api = DummyAPI()
 
     def init_apis(self, cookies: dict[str, str]) -> None:
         self.graphql_api = GraphQLAPI(self.client, "graphql", cookies)
@@ -184,7 +193,7 @@ class TwitterAPI:
         self.live_video_stream_api = LiveVideoStreamAPI(self.client, "1.1/live_video_stream", cookies)
 
     def __bool__(self) -> bool:
-        return (self.graphql_api and self.fleets_api and self.live_video_stream_api) is not None
+        return bool(self.graphql_api and self.fleets_api and self.live_video_stream_api)
 
 
 API = TwitterAPI()
