@@ -315,15 +315,15 @@ class LiveVideoStreamAPI(APIClient):
 
 class DummyAPI:
     """Dummy API class used for uninitialized APIs."""
-    def __init__(self) -> None:
-        pass
+    def __init__(self, api_name: str = "API") -> None:
+        self.api_name = api_name
 
     def __getattr__(self, name: str) -> NoReturn:
         """Show a clear message to the user if the API was not initialized.
 
         - raise RuntimeError: If any attribute of the class is accessed or any method is called.
         """
-        raise RuntimeError("APIs are not initialized")
+        raise RuntimeError(f"{self.api_name} is not initialized")
 
     def __bool__(self) -> False:
         """Always evaluate instances of the class to `False`.
@@ -351,7 +351,9 @@ class TwitterAPI:
         They need to be initialized by calling the `init_apis()` method with cookies of the user.
         """
         self.client = HTTPClient()
-        self.graphql_api = self.fleets_api = self.live_video_stream_api = DummyAPI()
+        self.graphql_api = DummyAPI("Twitter GraphQL API")
+        self.fleets_api = DummyAPI("Twitter Fleets API")
+        self.live_video_stream_api = DummyAPI("Twitter Live Video Stream API")
 
     def init_apis(self, cookies: dict[str, str]) -> None:
         """Initialize all APIs in this collection with the specified cookies."""
