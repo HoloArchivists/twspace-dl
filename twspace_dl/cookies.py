@@ -16,9 +16,6 @@ class CookiesLoader:
         re.MULTILINE
     )
 
-    def __init__(self) -> None:
-        pass
-
     @classmethod
     def load(cls, path: str) -> dict[str, str]:
         """Load cookies from the specified path.
