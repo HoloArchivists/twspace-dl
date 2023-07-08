@@ -135,7 +135,19 @@ def main() -> int:
     parser.add_argument("-s", "--skip-download", action="store_true")
     parser.add_argument("-k", "--keep-files", action="store_true")
     parser.add_argument("-l", "--log", action="store_true", help="create logfile")
-    parser.add_argument("-c", "--input-cookie-file", type=str, metavar="COOKIE_FILE")
+    parser.add_argument(
+        "-c",
+        "--input-cookie-file",
+        type=str,
+        metavar="COOKIE_FILE",
+        help=(
+            "cookies file in the Netscape format. The specs of the Netscape cookies format "
+            "can be found here: https://curl.se/docs/http-cookies.html. The cookies file is "
+            "now required due to the Twitter API change that prohibited guest user access to "
+            "Twitter API endpoints on 2023-07-01."
+        ),
+        required=True
+    )
 
     input_method.add_argument("-i", "--input-url", type=str, metavar="SPACE_URL")
     input_method.add_argument("-U", "--user-url", type=str, metavar="USER_URL")
