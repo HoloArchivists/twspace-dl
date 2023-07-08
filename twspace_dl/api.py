@@ -9,11 +9,10 @@ from requests.exceptions import (
     ConnectionError, HTTPError, JSONDecodeError, RetryError
 )
 
+from .cookies import CookiesLoader
+
 """Twitter unofficial API authorization header."""
 TWITTER_AUTHORIZATION = "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
-
-"""Required cookies name for making requests to the unofficial Twitter API."""
-REQUIRED_COOKIES = {"auth_token", "ct0"}
 
 """Retry parameters for making all requests."""
 RETRY = Retry(
@@ -95,8 +94,7 @@ class APIClient:
         - path: The path to add to the base URL of the API.
         - cookies: The cookies used for making all requests to the API.
         """
-        if missing := REQUIRED_COOKIES - cookies.keys():
-            raise RuntimeError(f"Missing required cookies: {', '.join(missing)}")
+        CookiesLoader.validate(cookies)
         self.client = client
         self.base_url = self.join_url(self._API_URL, path)
         self.cookies = cookies

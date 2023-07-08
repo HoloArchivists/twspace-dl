@@ -67,30 +67,23 @@ def space(args: argparse.Namespace) -> int:
             handlers=handlers,
         )
 
-    if args.input_cookie_file:
-        cookies = CookiesLoader.load(args.input_cookie_file)
-        API.init_apis(cookies)
-
-    if API:
-        if args.user_url:
-            twspace = Twspace.from_user_avatar(args.user_url)
-        elif args.input_metadata:
-            twspace = Twspace.from_file(args.input_metadata)
-        elif args.input_url:
-            twspace = Twspace.from_space_url(args.input_url)
-        else:
-            logging.warning(
-                (
-                    "No metadata provided.\n"
-                    "The resulting file won't be associated with the original space.\n"
-                    "Please consider adding a space url or a metadata file"
-                )
-            )
-            twspace = Twspace({})
-        twspace_dl = TwspaceDL(twspace, args.output)
+    API.init_apis(CookiesLoader.load(args.input_cookie_file))
+    if args.user_url:
+        twspace = Twspace.from_user_avatar(args.user_url)
+    elif args.input_metadata:
+        twspace = Twspace.from_file(args.input_metadata)
+    elif args.input_url:
+        twspace = Twspace.from_space_url(args.input_url)
     else:
-        logging.error("Due to Twitter API change, users must login to access it.\nPlease provide a cookies file in Netscape format with the `-c` or `--input-cookie-file` option.")
-        raise RuntimeError("Cannot load cookies from file")
+        logging.warning(
+            (
+                "No metadata provided.\n"
+                "The resulting file won't be associated with the original space.\n"
+                "Please consider adding a space url or a metadata file"
+            )
+        )
+        twspace = Twspace({})
+    twspace_dl = TwspaceDL(twspace, args.output)
 
     if args.from_dynamic_url:
         twspace_dl.dyn_url = args.from_dynamic_url
