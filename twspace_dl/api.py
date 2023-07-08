@@ -22,7 +22,7 @@ RETRY = Retry(
     read=2,
     redirect=3,
     backoff_factor=0.2,
-    status_forcelist=(429, 500, 502, 503, 504)
+    status_forcelist=(500, 502, 503, 504)
 )
 
 """Default connection timeout for making all requests."""
@@ -70,13 +70,16 @@ class HTTPClient:
             return response
         except RetryError as e:
             logging.error(f"Max retries exceeded with URL: {e.request.url}, reason: {e.args[0].reason}")
-            raise RuntimeError("API request failed after max retries")
+            raise RuntimeError("API request failed after max retries") from e
         except ConnectionError as e:
             logging.error(f"Connection error occurred with URL: {e.request.url}, reason: {e.args[0].reason}")
-            raise RuntimeError("API request failed with connection error")
+            raise RuntimeError("API request failed with connection error") from e
         except HTTPError as e:
+            if e.response.status_code == requests.codes.TOO_MANY_REQUESTS:
+                logging.error(f"API rate limit exceeded with URL: {url}")
+                raise
             logging.error(f"HTTP error occurred with URL: {e.request.url}, status code: {e.response.status_code}")
-            raise RuntimeError("API request failed with HTTP error")
+            raise RuntimeError("API request failed with HTTP error") from e
 
 
 class APIClient:
@@ -163,7 +166,7 @@ class GraphQLAPI(APIClient):
         query_id: str,
         operation_name: str,
         variables: dict[str, str] | str,
-        features: dict[str, str] | str
+        features: dict[str, str] | str | None = None
     ) -> Any:
         """Send HTTP GET requests to the Twitter GraphQL API.
 
@@ -174,13 +177,10 @@ class GraphQLAPI(APIClient):
 
         - return: The returned object of the query.
         """
-        return super().get(
-            self.join_url(query_id, operation_name),
-            {
-                "variables": self._dump_json(variables),
-                "features": self._dump_json(features)
-            }
-        )
+        params = {"variables": self._dump_json(variables)}
+        if features:
+            params["features"] = self._dump_json(features)
+        return super().get(self.join_url(query_id, operation_name), params)
 
     def audio_space_by_id(self, space_id: str) -> dict:
         """Query Twitter Space details by its ID.
@@ -218,6 +218,24 @@ class GraphQLAPI(APIClient):
         features = '{"hidden_profile_likes_enabled":false,"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"subscriptions_verification_info_verified_since_enabled":true,"highlights_tweets_tab_ui_enabled":true,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"responsive_web_graphql_timeline_navigation_enabled":true}'
         return self.get(query_id, operation_name, variables, features)
 
+    def profile_spotlights_query(self, screen_name: str) -> dict:
+        """Backup API endpoint to query Twitter user details by their screen name (@ handle).
+
+        The response data from this API contains less information of the user than the `user_by_screen_name`
+        API, but still has the essential `rest_id` field. Therefore, it is used as a backup of the other API
+        endpoint if the other one was rate limited.
+
+        - screen_name: The screen name (@ handle) of the Twitter user.
+
+        - return: The details of the queried Twitter user.
+        """
+        query_id = "ZQEuHPrIYlvh1NAyIQHP_w"
+        operation_name = "ProfileSpotlightsQuery"
+        variables = {
+            "screen_name": screen_name
+        }
+        return self.get(query_id, operation_name, variables)
+
     def user_id(self, screen_name: str) -> str:
         """Retrieve the numeric user ID (`rest_id`) of the user with the specified screen name (@ handle).
 
@@ -225,8 +243,13 @@ class GraphQLAPI(APIClient):
 
         - return: The numeric user ID (`rest_id`) of the specified user.
         """
-        data = self.user_by_screen_name(screen_name)
-        return data["data"]["user"]["result"]["rest_id"]
+        try:
+            data = self.user_by_screen_name(screen_name)
+            return data["data"]["user"]["result"]["rest_id"]
+        except HTTPError:
+            logging.warning("Trying with backup endpoint")
+            data = self.profile_spotlights_query(screen_name)
+            return data["data"]["user_result_by_screen_name"]["result"]["rest_id"]
 
     def user_id_from_url(self, user_url: str) -> str:
         """Retrieve the numeric user ID (`rest_id`) of the user that the specified profile URL linked to.
