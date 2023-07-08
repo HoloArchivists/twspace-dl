@@ -89,7 +89,7 @@ def space(args: argparse.Namespace) -> int:
             twspace = Twspace({})
         twspace_dl = TwspaceDL(twspace, args.output)
     else:
-        logging.error("Due to Twitter API change, users must login to access it. Please provide a cookies file in Netscape format with the `--input-cookie-file` option.")
+        logging.error("Due to Twitter API change, users must login to access it.\nPlease provide a cookies file in Netscape format with the `-c` or `--input-cookie-file` option.")
         raise RuntimeError("Cannot load cookies from file")
 
     if args.from_dynamic_url:
@@ -130,22 +130,12 @@ def main() -> int:
     input_group = parser.add_argument_group("input")
     input_method = input_group.add_mutually_exclusive_group()
     output_group = parser.add_argument_group("output")
-    login_group = parser.add_argument_group("login")
 
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument("-s", "--skip-download", action="store_true")
     parser.add_argument("-k", "--keep-files", action="store_true")
     parser.add_argument("-l", "--log", action="store_true", help="create logfile")
-    parser.add_argument("--input-cookie-file", type=str, metavar="COOKIE_FILE")
-
-    login_group.add_argument("--username", type=str, metavar="USERNAME", default=None)
-    login_group.add_argument("--password", type=str, metavar="PASSWORD", default=None)
-    login_group.add_argument(
-        "--output-cookie-file",
-        type=str,
-        metavar="OUTPUT_COOKIE_FILE",
-        default=None,
-    )
+    parser.add_argument("-c", "--input-cookie-file", type=str, metavar="COOKIE_FILE")
 
     input_method.add_argument("-i", "--input-url", type=str, metavar="SPACE_URL")
     input_method.add_argument("-U", "--user-url", type=str, metavar="USER_URL")
