@@ -39,7 +39,8 @@
 
 ## Requirements
 
-ffmpeg if not using portable binaries
+- `ffmpeg` if not using portable binaries.
+- A logged in user's cookies file exported from Twitter in the [Netscape format](https://curl.se/docs/http-cookies.html).
 
 ## Install
 
@@ -78,7 +79,7 @@ pip install git+https://github.com/HoloArchivists/twspace-dl
 ## Usage
 
 ```bash
-twspace_dl -i space_url
+twspace_dl -i space_url -c COOKIE_FILE
 ```
 
 <details>
@@ -86,8 +87,8 @@ twspace_dl -i space_url
 
 ### Windows
 
-```bash
-.\twspace_dl.exe -i space_url
+```powershell
+.\twspace_dl.exe -i space_url -c COOKIE_FILE
 ```
 
 </details>
@@ -97,39 +98,44 @@ twspace_dl -i space_url
 Here's the output of the help option
 
 ```txt
-usage: twspace_dl [-h] [-v] [-s] [-k] [-l] [--input-cookie-file COOKIE_FILE]
-                  [--username USERNAME] [--password PASSWORD]
-                  [--output-cookie-file OUTPUT_COOKIE_FILE]
+usage: twspace_dl [-h] [-v] [-s] [-k] [-l] -c COOKIE_FILE
                   [-i SPACE_URL | -U USER_URL] [-d DYN_URL] [-f URL] [-M PATH]
-                  [-o FORMAT_STR] [-m] [-p] [-u] [--write-url URL_OUTPUT]
+                  [-o FORMAT_STR] [-m] [-p] [-u] [--write-url URL_OUTPUT] [-e]
 
 Script designed to help download twitter spaces
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -v, --verbose
   -s, --skip-download
   -k, --keep-files
   -l, --log             create logfile
-  --input-cookie-file COOKIE_FILE
+  -c COOKIE_FILE, --input-cookie-file COOKIE_FILE
+                        cookies file in the Netscape format. The specs of the
+                        Netscape cookies format can be found here:
+                        https://curl.se/docs/http-cookies.html. The cookies
+                        file is now required due to the Twitter API change
+                        that prohibited guest user access to Twitter API
+                        endpoints on 2023-07-01.
 
 input:
   -i SPACE_URL, --input-url SPACE_URL
   -U USER_URL, --user-url USER_URL
   -d DYN_URL, --from-dynamic-url DYN_URL
                         use the dynamic url for the processes(useful for ended
-                        spaces) example: https://prod-fastly-ap-northeast-1.vi
-                        deo.pscp.tv/Transcoding/v1/hls/zUUpEgiM0M18jCGxo2eSZs9
-                        9p49hfyFQr1l4cdze-Sp4T-DQOMMoZpkbdyetgfwscfvvUkAdeF-I5
-                        hPI4bGoYg/non_transcode/ap-northeast-1/periscope-
+                        spaces) example: https://prod-fastly-ap-northeast-
+                        1.video.pscp.tv/Transcoding/v1/hls/zUUpEgiM0M18jCGxo2e
+                        SZs99p49hfyFQr1l4cdze-Sp4T-
+                        DQOMMoZpkbdyetgfwscfvvUkAdeF-
+                        I5hPI4bGoYg/non_transcode/ap-northeast-1/periscope-
                         replay-direct-prod-ap-northeast-1-public/audio-
                         space/dynamic_playlist.m3u8?type=live
   -f URL, --from-master-url URL
                         use the master url for the processes(useful for ended
-                        spaces) example: https://prod-fastly-ap-northeast-1.vi
-                        deo.pscp.tv/Transcoding/v1/hls/YRSsw6_P5xUZHMualK5-ihv
-                        ePR6o4QmoZVOBGicKvmkL_KB9IQYtxVqm3P_vpZ2HnFkoRfar4_uJO
-                        jqC8OCo5A/non_transcode/ap-northeast-1/periscope-
+                        spaces) example: https://prod-fastly-ap-northeast-
+                        1.video.pscp.tv/Transcoding/v1/hls/YRSsw6_P5xUZHMualK5
+                        -ihvePR6o4QmoZVOBGicKvmkL_KB9IQYtxVqm3P_vpZ2HnFkoRfar4
+                        _uJOjqC8OCo5A/non_transcode/ap-northeast-1/periscope-
                         replay-direct-prod-ap-northeast-1-public/audio-
                         space/master_playlist.m3u8
   -M PATH, --input-metadata PATH
@@ -144,11 +150,7 @@ output:
   -u, --url             display the master url
   --write-url URL_OUTPUT
                         write master url to file
-
-login:
-  --username USERNAME
-  --password PASSWORD
-  --output-cookie-file OUTPUT_COOKIE_FILE
+  -e, --embed-cover     embed user avatar as cover art
 ```
 
 ## Format
@@ -173,7 +175,7 @@ Example: `[%(creator_screen_name)s]-%(title)s|%(start_date)s`
 
 This is an error in ffmpeg that does not affect twspace_dl at all as far as I know.
 
-## Service 
+## Service
 
 To run as a systemd service please refer to https://github.com/HoloArchivists/twspace-dl/blob/main/SERVICE.md
 
