@@ -7,9 +7,8 @@ from typing import Any, NoReturn
 
 import requests
 from requests.adapters import HTTPAdapter, Retry
-from requests.exceptions import (
-    ConnectionError, HTTPError, JSONDecodeError, RetryError
-)
+from requests.exceptions import (ConnectionError, HTTPError, JSONDecodeError,
+                                 RetryError)
 
 from .cookies import validate_cookies
 
@@ -23,7 +22,7 @@ RETRY = Retry(
     read=2,
     redirect=3,
     backoff_factor=0.2,
-    status_forcelist=(500, 502, 503, 504)
+    status_forcelist=(500, 502, 503, 504),
 )
 
 """Default connection timeout for making all requests."""
@@ -44,7 +43,7 @@ class HTTPClient:
         params: dict[str, str] = {},
         headers: dict[str, str] = {},
         cookies: dict[str, str] = {},
-        timeout: int = TIMEOUT
+        timeout: int = TIMEOUT,
     ) -> requests.Response:
         """Send HTTP GET requests to the specified URL.
 
@@ -61,25 +60,27 @@ class HTTPClient:
         """
         try:
             response = self.session.get(
-                url,
-                params=params,
-                headers=headers,
-                cookies=cookies,
-                timeout=timeout
+                url, params=params, headers=headers, cookies=cookies, timeout=timeout
             )
             response.raise_for_status()
             return response
         except RetryError as e:
-            logging.error(f"Max retries exceeded with URL: {e.request.url}, reason: {e.args[0].reason}")
+            logging.error(
+                f"Max retries exceeded with URL: {e.request.url}, reason: {e.args[0].reason}"
+            )
             raise RuntimeError("API request failed after max retries") from e
         except ConnectionError as e:
-            logging.error(f"Connection error occurred with URL: {e.request.url}, reason: {e.args[0].reason}")
+            logging.error(
+                f"Connection error occurred with URL: {e.request.url}, reason: {e.args[0].reason}"
+            )
             raise RuntimeError("API request failed with connection error") from e
         except HTTPError as e:
             if e.response.status_code == requests.codes.TOO_MANY_REQUESTS:
                 logging.error(f"API rate limit exceeded with URL: {url}")
                 raise
-            logging.error(f"HTTP error occurred with URL: {e.request.url}, status code: {e.response.status_code}")
+            logging.error(
+                f"HTTP error occurred with URL: {e.request.url}, status code: {e.response.status_code}"
+            )
             raise RuntimeError("API request failed with HTTP error") from e
 
 
@@ -102,7 +103,7 @@ class APIClient:
         self.cookies = cookies
         self.headers = {
             "authorization": TWITTER_AUTHORIZATION,
-            "x-csrf-token": cookies["ct0"]
+            "x-csrf-token": cookies["ct0"],
         }
 
     def join_url(self, *paths: str) -> str:
@@ -127,11 +128,13 @@ class APIClient:
                 self.join_url(self.base_url, path),
                 params=params,
                 headers=self.headers,
-                cookies=self.cookies
+                cookies=self.cookies,
             )
             return response.json()
         except JSONDecodeError:
-            logging.error(f"Cannot decode response from URL: {response.url}, status code: {response.status_code}")
+            logging.error(
+                f"Cannot decode response from URL: {response.url}, status code: {response.status_code}"
+            )
             logging.debug(f"Response text: {response.text!r}")
             raise RuntimeError("API response cannot be decoded as JSON")
 
@@ -166,7 +169,7 @@ class GraphQLAPI(APIClient):
         query_id: str,
         operation_name: str,
         variables: dict[str, str] | str,
-        features: dict[str, str] | str | None = None
+        features: dict[str, str] | str | None = None,
     ) -> Any:
         """Send HTTP GET requests to the Twitter GraphQL API.
 
@@ -195,7 +198,7 @@ class GraphQLAPI(APIClient):
             "id": space_id,
             "isMetatagsQuery": True,
             "withReplays": True,
-            "withListeners": True
+            "withListeners": True,
         }
         # "features" is copied as-is from real requests
         features = '{"spaces_2022_h2_clipping":true,"spaces_2022_h2_spaces_communities":true,"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"tweetypie_unmention_optimization_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"responsive_web_twitter_article_tweet_consumption_enabled":false,"tweet_awards_web_tipping_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":true,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":true,"responsive_web_graphql_timeline_navigation_enabled":true,"longform_notetweets_rich_text_read_enabled":true,"longform_notetweets_inline_media_enabled":true,"responsive_web_media_download_video_enabled":false,"responsive_web_enhance_cards_enabled":false}'
@@ -210,10 +213,7 @@ class GraphQLAPI(APIClient):
         """
         query_id = "oUZZZ8Oddwxs8Cd3iW3UEA"
         operation_name = "UserByScreenName"
-        variables = {
-            "screen_name": screen_name,
-            "withSafetyModeUserFields": True
-        }
+        variables = {"screen_name": screen_name, "withSafetyModeUserFields": True}
         # "features" is copied as-is from real requests
         features = '{"hidden_profile_likes_enabled":false,"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"subscriptions_verification_info_verified_since_enabled":true,"highlights_tweets_tab_ui_enabled":true,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"responsive_web_graphql_timeline_navigation_enabled":true}'
         return self.get(query_id, operation_name, variables, features)
@@ -231,9 +231,7 @@ class GraphQLAPI(APIClient):
         """
         query_id = "ZQEuHPrIYlvh1NAyIQHP_w"
         operation_name = "ProfileSpotlightsQuery"
-        variables = {
-            "screen_name": screen_name
-        }
+        variables = {"screen_name": screen_name}
         return self.get(query_id, operation_name, variables)
 
     def user_id(self, screen_name: str) -> str:
@@ -266,7 +264,9 @@ class GraphQLAPI(APIClient):
 
         - raise RuntimeError: If the specified URL is not a valid Twitter user profile URL.
         """
-        if match := re.match(r"^(?:https?:\/\/|)twitter\.com\/(?P<screen_name>\w+)$", user_url.strip("/")):
+        if match := re.match(
+            r"^(?:https?:\/\/|)twitter\.com\/(?P<screen_name>\w+)$", user_url.strip("/")
+        ):
             return self.user_id(match.group("screen_name"))
         raise RuntimeError(f"Invalid Twitter user URL: {user_url}")
 
@@ -304,13 +304,12 @@ class FleetsAPI(APIClient):
         - return: Twitter Space details of the specified user IDs. Only ongoing Twitter Spaces will be returned.
         """
         if len(user_ids) > 100:
-            raise RuntimeError("Number of user IDs exceeded the limit of 100 per request")
+            raise RuntimeError(
+                "Number of user IDs exceeded the limit of 100 per request"
+            )
         version = "v1"
         endpoint = "avatar_content"
-        params = {
-            "user_ids": ",".join(user_ids),
-            "only_spaces": "true"
-        }
+        params = {"user_ids": ",".join(user_ids), "only_spaces": "true"}
         return self.get(version, endpoint, params)
 
 
@@ -338,6 +337,7 @@ class LiveVideoStreamAPI(APIClient):
 
 class DummyAPI:
     """Dummy API class used for uninitialized APIs."""
+
     def __init__(self, api_name: str = "API") -> None:
         self.api_name = api_name
 
@@ -382,7 +382,9 @@ class TwitterAPI:
         """Initialize all APIs in this collection with the specified cookies."""
         self.graphql_api = GraphQLAPI(self.client, "graphql", cookies)
         self.fleets_api = FleetsAPI(self.client, "fleets", cookies)
-        self.live_video_stream_api = LiveVideoStreamAPI(self.client, "1.1/live_video_stream", cookies)
+        self.live_video_stream_api = LiveVideoStreamAPI(
+            self.client, "1.1/live_video_stream", cookies
+        )
 
     def __bool__(self) -> bool:
         """Determine if all APIs are initialized.

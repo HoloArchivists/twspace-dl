@@ -139,7 +139,7 @@ def main() -> int:
             "now required due to the Twitter API change that prohibited guest user access to "
             "Twitter API endpoints on 2023-07-01."
         ),
-        required=True
+        required=True,
     )
 
     input_method.add_argument("-i", "--input-url", type=str, metavar="SPACE_URL")

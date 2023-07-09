@@ -35,7 +35,9 @@ class Twspace(dict):
                 self["creator_name"] = creator_info["name"]  # type: ignore
                 self["creator_screen_name"] = creator_info["screen_name"]  # type: ignore
                 self["creator_profile_image_url"] = creator_info["profile_image_url_https"].replace("_normal", "")  # type: ignore
-                self["creator_id"] = API.graphql_api.user_id(creator_info["screen_name"])
+                self["creator_id"] = API.graphql_api.user_id(
+                    creator_info["screen_name"]
+                )
 
             self.source = metadata
             self.root = root

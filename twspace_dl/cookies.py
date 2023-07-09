@@ -8,16 +8,15 @@ HEX_TEMPLATE = "(?:[0-9a-f]{{2}}){{{length}}}"
 """Regex patterns to validate values of the specified cookies."""
 VALID_COOKIES = {
     "auth_token": re.compile(HEX_TEMPLATE.format(length=20)),
-    "ct0": re.compile(HEX_TEMPLATE.format(length=80))
+    "ct0": re.compile(HEX_TEMPLATE.format(length=80)),
 }
 
 """The regex pattern to extract keys and values of all required cookies."""
 COOKIES_PATTERN = re.compile(
     r"\s+({keys})\s+({values})$".format(
-        keys="|".join(VALID_COOKIES.keys()),
-        values=HEX_TEMPLATE.format(length="20,80")
+        keys="|".join(VALID_COOKIES.keys()), values=HEX_TEMPLATE.format(length="20,80")
     ),
-    re.MULTILINE
+    re.MULTILINE,
 )
 
 
@@ -52,5 +51,9 @@ def validate_cookies(cookies: dict[str, str]) -> None:
         raise TypeError(f"Missing required cookies: {', '.join(missing)}")
     if extra := cookies.keys() - VALID_COOKIES.keys():
         raise TypeError(f"Extra cookies: {', '.join(extra)}")
-    if invalid := {key for key, value in cookies.items() if not VALID_COOKIES[key].fullmatch(str(value))}:
+    if invalid := {
+        key
+        for key, value in cookies.items()
+        if not VALID_COOKIES[key].fullmatch(str(value))
+    }:
         raise ValueError(f"Invalid cookies: {', '.join(invalid)}")
