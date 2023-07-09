@@ -5,7 +5,7 @@ import json
 import logging
 import sys
 from types import TracebackType
-from typing import Type
+from typing import Optional, Type
 
 from twspace_dl.api import API
 from twspace_dl.cookies import CookiesLoader
@@ -46,7 +46,7 @@ def space(args: argparse.Namespace) -> int:
         log_filename = datetime.datetime.now().strftime(
             ".twspace-dl.%Y-%m-%d_%H-%M-%S_%f.log"
         )
-        handlers: list[logging.Handler] | None = [
+        handlers: Optional[list[logging.Handler]] = [
             logging.FileHandler(log_filename),
             logging.StreamHandler(),
         ]
