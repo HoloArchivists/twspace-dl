@@ -11,7 +11,7 @@ from requests.exceptions import (
     ConnectionError, HTTPError, JSONDecodeError, RetryError
 )
 
-from .cookies import CookiesLoader
+from .cookies import validate_cookies
 
 """Twitter unofficial API authorization header."""
 TWITTER_AUTHORIZATION = "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
@@ -96,7 +96,7 @@ class APIClient:
         - path: The path to add to the base URL of the API.
         - cookies: The cookies used for making all requests to the API.
         """
-        CookiesLoader.validate(cookies)
+        validate_cookies(cookies)
         self.client = client
         self.base_url = self.join_url(self._API_URL, path)
         self.cookies = cookies

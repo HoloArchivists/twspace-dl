@@ -8,7 +8,7 @@ from types import TracebackType
 from typing import Optional, Type
 
 from twspace_dl.api import API
-from twspace_dl.cookies import CookiesLoader
+from twspace_dl.cookies import load_cookies
 from twspace_dl.twspace import Twspace
 from twspace_dl.twspace_dl import TwspaceDL
 
@@ -67,7 +67,7 @@ def space(args: argparse.Namespace) -> int:
             handlers=handlers,
         )
 
-    API.init_apis(CookiesLoader.load(args.input_cookie_file))
+    API.init_apis(load_cookies(args.input_cookie_file))
     if args.user_url:
         twspace = Twspace.from_user_avatar(args.user_url)
     elif args.input_metadata:
