@@ -5,6 +5,7 @@ import os
 import re
 from collections import defaultdict
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Union
 
 import requests
 
@@ -67,20 +68,45 @@ class Twspace(dict):
             self["media_key"] = root["media_key"]
 
     @staticmethod
-    def _metadata(space_id) -> dict:
+    def _metadata(space_id: str, cookie_str: Optional[str] = None, csrf_token: Optional[str] = None) -> dict:
         params = {
             "variables": (
                 "{"
                 f'"id":"{space_id}",'
-                '"isMetatagsQuery":false,'
-                '"withSuperFollowsUserFields":true,'
-                '"withUserResults":true,'
-                '"withBirdwatchPivots":false,'
-                '"withReactionsMetadata":false,'
-                '"withReactionsPerspective":false,'
-                '"withSuperFollowsTweetFields":true,'
+                '"isMetatagsQuery":true,'
                 '"withReplays":true,'
-                '"withScheduledSpaces":true'
+                '"withListeners":true'
+                "}"
+            ),
+            "features": (
+                "{"
+                '"spaces_2022_h2_clipping": true,'
+                '"spaces_2022_h2_spaces_communities": true,'
+                '"responsive_web_graphql_exclude_directive_enabled": true,'
+                '"verified_phone_label_enabled": false,'
+                '"creator_subscriptions_tweet_preview_api_enabled": true,'
+                '"responsive_web_graphql_skip_user_profile_image_extensions_enabled": false,'
+                '"tweetypie_unmention_optimization_enabled": true,'
+                '"responsive_web_edit_tweet_api_enabled": true,'
+                '"graphql_is_translatable_rweb_tweet_is_translatable_enabled": true,'
+                '"view_counts_everywhere_api_enabled": true,'
+                '"longform_notetweets_consumption_enabled": true,'
+                '"responsive_web_twitter_article_tweet_consumption_enabled": false,'
+                '"tweet_awards_web_tipping_enabled": false,'
+                '"freedom_of_speech_not_reach_fetch_enabled": true,'
+                '"standardized_nudges_misinfo": true,'
+                '"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled": true,'
+                '"responsive_web_graphql_timeline_navigation_enabled": true,'
+                '"longform_notetweets_rich_text_read_enabled": true,'
+                '"longform_notetweets_inline_media_enabled": true,'
+                '"responsive_web_media_download_video_enabled": false,'
+                '"responsive_web_enhance_cards_enabled": false'
+                "}"
+            ),
+            "fieldToggles": (
+                "{"
+                '"withAuxiliaryUserLabels":false,'
+                '"withArticleRichContentState":false'
                 "}"
             )
         }
@@ -90,14 +116,24 @@ class Twspace(dict):
                 "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
                 "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
             ),
-            "x-guest-token": twitter.guest_token(),
         }
+        if cookie_str:
+            headers["cookie"] = cookie_str
+        else:
+            logging.warning("No cookie string provided, request will likely be rejected")
+
+        if csrf_token:
+            headers["x-csrf-token"] = csrf_token
+        else:
+            logging.warning("No csrf token provided, request will likely be rejected")
+
         response = requests.get(
-            "https://twitter.com/i/api/graphql/jyQ0_DEMZHeoluCgHJ-U5Q/AudioSpaceById",
+            "https://twitter.com/i/api/graphql/j0gdijZvHUVbR2fMtxcgHg/AudioSpaceById",
             params=params,
             headers=headers,
             timeout=30,
         )
+        response.raise_for_status()
         metadata = response.json()
         try:
             media_key = metadata["data"]["audioSpace"]["metadata"]["media_key"]
@@ -189,7 +225,7 @@ class Twspace(dict):
         return cls(cls._metadata(space_id))
 
     @classmethod
-    def from_user_tweets(cls, url: str):
+    def from_user_tweets(cls, url: str, cookie_str: Optional[str] = None, csrf_token: Optional[str] = None):
         """Create a Twspace instance from the first space
         found in the 20 last user tweets"""
         user_id = twitter.user_id(url)
@@ -198,29 +234,62 @@ class Twspace(dict):
                 "Bearer "
                 "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
                 "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
-            ),
-            "x-guest-token": twitter.guest_token(),
+            )
         }
+        if cookie_str:
+            headers["cookie"] = cookie_str
+        else:
+            logging.warning("No cookie string provided, request will likely be rejected")
+
+        if csrf_token:
+            headers["x-csrf-token"] = csrf_token
+        else:
+            logging.warning("No csrf token provided, request will likely be rejected")
+
         params = {
             "variables": (
                 "{"
                 f'"userId":"{user_id}",'
                 '"count":20,'
-                '"withTweetQuoteCount":true,'
                 '"includePromotedContent":true,'
-                '"withQuickPromoteEligibilityTweetFields":false,'
-                '"withSuperFollowsUserFields":true,'
-                '"withUserResults":true,'
-                '"withNftAvatar":false,'
-                '"withBirdwatchPivots":false,'
-                '"withReactionsMetadata":false,'
-                '"withReactionsPerspective":false,'
-                '"withSuperFollowsTweetFields":true,'
-                '"withVoice":true}'
+                '"withQuickPromoteEligibilityTweetFields":true,'
+                '"withVoice":true,'
+                '"withV2Timeline":true'
+                "}"
+            ),
+            "features": (
+                "{"
+                '"rweb_lists_timeline_redesign_enabled": true,'
+                '"responsive_web_graphql_exclude_directive_enabled": true,'
+                '"verified_phone_label_enabled": false,'
+                '"creator_subscriptions_tweet_preview_api_enabled": true,'
+                '"responsive_web_graphql_timeline_navigation_enabled": true,'
+                '"responsive_web_graphql_skip_user_profile_image_extensions_enabled": false,'
+                '"tweetypie_unmention_optimization_enabled": true,'
+                '"responsive_web_edit_tweet_api_enabled": true,'
+                '"graphql_is_translatable_rweb_tweet_is_translatable_enabled": true,'
+                '"view_counts_everywhere_api_enabled": true,'
+                '"longform_notetweets_consumption_enabled": true,'
+                '"responsive_web_twitter_article_tweet_consumption_enabled": false,'
+                '"tweet_awards_web_tipping_enabled": false,'
+                '"freedom_of_speech_not_reach_fetch_enabled": true,'
+                '"standardized_nudges_misinfo": true,'
+                '"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled": true,'
+                '"longform_notetweets_rich_text_read_enabled": true,'
+                '"longform_notetweets_inline_media_enabled": true,'
+                '"responsive_web_media_download_video_enabled": false,'
+                '"responsive_web_enhance_cards_enabled": false'
+                "}"
+            ),
+            "fieldToggles": (
+                "{"
+                '"withAuxiliaryUserLabels":false,'
+                '"withArticleRichContentState":false'
+                "}"
             )
         }
         response = requests.get(
-            "https://twitter.com/i/api/graphql/jpCmlX6UgnPEZJknGKbmZA/UserTweets",
+            "https://twitter.com/i/api/graphql/2GIWTr7XwadIixZDtyXd4A/UserTweets",
             params=params,
             headers=headers,
             timeout=30,
@@ -236,7 +305,7 @@ class Twspace(dict):
         return cls(cls._metadata(space_id))
 
     @classmethod
-    def from_user_avatar(cls, user_url, auth_token):
+    def from_user_avatar(cls, user_url, cookie_str: str, csrf_token: Optional[str] = None):
         """Create a Twspace instance from a twitter user's ongoing space"""
         headers = {
             "authorization": (
@@ -244,8 +313,15 @@ class Twspace(dict):
                 "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
                 "=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
             ),
-            "cookie": f"auth_token={auth_token};",
+            "cookie": cookie_str,
         }
+        if csrf_token:
+            headers["x-csrf-token"] = csrf_token
+        else:
+            logging.warning(
+                "csrf token not provided, "
+                "you may encounter a 403 error if you are not logged in"
+            )
         user_id = twitter.user_id(user_url)
         params = {"user_ids": user_id, "only_spaces": "true"}
         avatar_content_res = requests.get(
