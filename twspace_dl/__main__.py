@@ -3,16 +3,14 @@ import argparse
 import datetime
 import json
 import logging
-import os
-import shutil
 import sys
 from types import TracebackType
-from typing import Iterable, Type
+from typing import Optional, Type
 
 from gooey import Gooey, GooeyParser
 
-from twspace_dl.login import Login, is_expired, load_from_file, write_to_file
-from twspace_dl.twitter import guest_token
+from twspace_dl.api import API
+from twspace_dl.cookies import load_cookies
 from twspace_dl.twspace import Twspace
 from twspace_dl.twspace_dl import TwspaceDL
 
@@ -40,7 +38,6 @@ def space(args: argparse.Namespace) -> int:
         or args.from_dynamic_url
         or args.from_master_url
     )
-    has_login = (args.username and args.password) or args.input_cookie_file
     if not has_input:
         print(
             "Either user url, space url, dynamic url or master url should be provided"
@@ -51,10 +48,10 @@ def space(args: argparse.Namespace) -> int:
         log_filename = datetime.datetime.now().strftime(
             ".twspace-dl.%Y-%m-%d_%H-%M-%S_%f.log"
         )
-        handlers = [
-            logging.FileHandler(log_filename, encoding="utf-8"),
+        handlers: Optional[list[logging.Handler]] = [
+            logging.FileHandler(log_filename),
             logging.StreamHandler(),
-        ]  # type: Iterable[logging.Handler] | None
+        ]
     else:
         handlers = None
 
@@ -72,22 +69,9 @@ def space(args: argparse.Namespace) -> int:
             handlers=handlers,
         )
 
-    auth_token = ""
-    if has_login:
-        if args.input_cookie_file:
-            if args.username and args.password and is_expired(args.input_cookie_file):
-                auth_token = Login(args.username, args.password, guest_token()).login()
-                write_to_file(auth_token, args.output_cookie_file)
-            else:
-                auth_token = load_from_file(args.input_cookie_file)
-        else:
-            auth_token = Login(args.username, args.password, guest_token()).login()
-
+    API.init_apis(load_cookies(args.input_cookie_file))
     if args.user_url:
-        if auth_token:
-            twspace = Twspace.from_user_avatar(args.user_url, auth_token)
-        else:
-            twspace = Twspace.from_user_tweets(args.user_url)
+        twspace = Twspace.from_user_avatar(args.user_url)
     elif args.input_metadata:
         twspace = Twspace.from_file(args.input_metadata)
     elif args.input_url:
@@ -109,26 +93,26 @@ def space(args: argparse.Namespace) -> int:
         twspace_dl.master_url = args.from_master_url
 
     if args.write_metadata:
-        metadata = json.dumps(twspace.source, indent=4)
-        filename = twspace_dl.filename
-        with open(f"{filename}.json", "w", encoding="utf-8") as metadata_io:
-            metadata_io.write(metadata)
+        with open(f"{twspace_dl.filename}.json", "w", encoding="utf-8") as metadata_io:
+            json.dump(twspace.source, metadata_io, indent=4)
     if args.url:
         print(twspace_dl.master_url)
     if args.write_url:
         with open(args.write_url, "a", encoding="utf-8") as url_output:
-            url_output.write("{}\n".format(twspace_dl.master_url))
+            url_output.write(f"{twspace_dl.master_url}\n")
     if args.write_playlist:
         twspace_dl.write_playlist()
 
     if not args.skip_download:
         try:
             twspace_dl.download()
+            if args.embed_cover:
+                twspace_dl.embed_cover()
         except KeyboardInterrupt:
             logging.info("Download Interrupted by user")
         finally:
-            if not args.keep_files and os.path.exists(twspace_dl.tempdir):
-                shutil.rmtree(twspace_dl.tempdir)
+            if not args.keep_files:
+                twspace_dl.cleanup()
     return EXIT_CODE_SUCCESS
 
 
@@ -161,18 +145,26 @@ def main() -> int:
         "-l", "--log", action="store_true", help="Create Log File", metavar="Log"
     )
 
-    login_group.add_argument(
-        "--input-cookie-file", type=str, metavar="Cookie File", widget="FileChooser"
-    )
-    login_group.add_argument("--username", type=str, metavar="Username", default=None)
-    login_group.add_argument("--password", type=str, metavar="Password", default=None)
-    login_group.add_argument(
-        "--output-cookie-file",
+    input_group = parser.add_argument_group("input")
+    input_method = input_group.add_mutually_exclusive_group()
+    output_group = parser.add_argument_group("output")
+
+    parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument("-s", "--skip-download", action="store_true")
+    parser.add_argument("-k", "--keep-files", action="store_true")
+    parser.add_argument("-l", "--log", action="store_true", help="create logfile")
+    parser.add_argument(
+        "-c",
+        "--input-cookie-file",
         type=str,
-        metavar="Output Cookie File",
-        default=None,
-        help="Write credentials from login",
-        widget="FileChooser",
+        metavar="COOKIE_FILE",
+        help=(
+            "cookies file in the Netscape format. The specs of the Netscape cookies format "
+            "can be found here: https://curl.se/docs/http-cookies.html. The cookies file is "
+            "now required due to the Twitter API change that prohibited guest user access to "
+            "Twitter API endpoints on 2023-07-01."
+        ),
+        required=True,
     )
 
     input_method.add_argument("-i", "--input-url", type=str, metavar="Space URL")
@@ -247,6 +239,12 @@ def main() -> int:
         metavar="Master URL File Path",
         help="Write master url to file",
         widget="FileChooser",
+    )
+    output_group.add_argument(
+        "-e",
+        "--embed-cover",
+        action="store_true",
+        help="embed user avatar as cover art",
     )
     parser.set_defaults(func=space)
     args = parser.parse_args()

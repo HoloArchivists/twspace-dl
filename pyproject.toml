@@ -16,6 +16,7 @@ classifiers = [
 python = "^3.8"
 requests = "^2.26.0"
 Gooey = "^1.0.8"
+mutagen = "^1.46.0"
 
 
 [tool.poetry.scripts]
