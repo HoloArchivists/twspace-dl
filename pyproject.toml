@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "twspace-dl"
-version = "2023.1.22.1"
+version = "2023.7.24.1"
 description = "The only tool to record Twitter spaces (yet)"
 authors = ["Ryu1845 <ryu@tpgjbo.xyz>"]
 readme = "README.md"
@@ -34,7 +34,7 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.bumpver]
-current_version = "2023.1.22.1"
+current_version = "2023.7.24.1"
 version_pattern = "YYYY.MM.DD.PATCH[-TAG]"
 commit_message = "bump version {old_version} -> {new_version}"
 commit = true
