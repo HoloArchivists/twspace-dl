@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   twspace-dl:
-    image: ghcr.io/ryu1845/twspace-dl
+    image: ghcr.io/holoarchivists/twspace-dl:latest
     # build: .
     restart: "no"
     env_file: .env
