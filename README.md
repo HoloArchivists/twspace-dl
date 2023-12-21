@@ -173,7 +173,7 @@ Example: `[%(creator_screen_name)s]-%(title)s|%(start_date)s`
 
 `Changing ID3 metadata in HLS audio elementary stream is not implemented....`
 
-This is an error in ffmpeg that does not affect twspace_dl at all as far as I know.
+This is an error in ffmpeg that does not affect twspace_dl at all as far as I know.
 
 ## Service
 
@@ -183,19 +183,13 @@ To run as a systemd service please refer to https://github.com/HoloArchivists/tw
 
 ### Run once
 
-> Use `${pwd}` in powershell, or `$(pwd)` in bash
-
 ```bash
-docker run --rm -v ${pwd}:/output ryu1845/twspace-dl -i space_url
+docker run --rm -v .:/output holoarchivists/twspace-dl -i space_url
 ```
 
 ### Run as monitoring service
 
-Using a cookie can help solve some problem with the twitter api. However, using one is not necessary.
-
-#### Without cookie
-
 1. Download the `docker-compose.yml`, `.env`, `monitor.sh` files and put them in a folder named `twspace-dl`.
 2. Edit `.env` and fill in the Twitter username you want to monitor.
-3. \[Optional] If you want to used a cookies file, put it into the folder and named it `cookies.txt`.
+3. Put a cookies file into the folder and named it `cookies.txt`.
 4. `docker-compose up -d`

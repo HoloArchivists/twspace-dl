@@ -7,10 +7,6 @@ services:
     restart: "no"
     env_file: .env
     volumes:
-      - ./:/output
-    entrypoint: [ "/usr/bin/dumb-init", "--", "sh" ]
+      - .:/output
+    entrypoint: [ "dumb-init", "--", "sh" ]
     command: [ "monitor.sh" ]
-    # logging:
-    #   driver: "gelf"
-    #   options:
-    #     gelf-address: "udp://127.0.0.1:12201"
