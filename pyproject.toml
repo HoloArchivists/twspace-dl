@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "twspace-dl"
-version = "2023.7.24.1"
+version = "2023.7.24.2"
 description = "The only tool to record Twitter spaces (yet)"
 authors = ["Ryu1845 <ryu@tpgjbo.xyz>"]
 readme = "README.md"
