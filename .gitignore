@@ -7,3 +7,4 @@ tmp*
 __pycache__
 .python-version
 cookies.txt
+master_urls.txt

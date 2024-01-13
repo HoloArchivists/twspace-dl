@@ -7,22 +7,22 @@ if [ -z "$TWITTER_ID" ]; then
   exit 1
 fi
 
+COOKIES_PATH="./cookies.txt"
+if [ ! -f "$COOKIES_PATH" ]; then
+  echo "The cookies file is now required due to the Twitter API change that prohibited guest user access to Twitter API endpoints on 2023-07-01."
+  exit 1
+fi
+
 INTERVAL=${INTERVAL:-10}
-COOKIES_PATH="/output/cookies.txt"
 
 # Monitor live streams of specific user
 while true; do
-  LOG_PREFIX=$(date +"[%m/%d/%y %H:%M:%S] [tw_space@${TWITTER_ID}] ")
+  LOG_PREFIX=$(date +"[%m/%d/%y %H:%M:%S] [tw_space@${TWITTER_ID}]")
 
   # Start recording
-  if [ ! -f "$COOKIES_PATH" ]; then
-    echo "$LOG_PREFIX [VRB] Start trying..."  
-    /venv/bin/twspace_dl -U "https://twitter.com/${TWITTER_ID}" --write-url "master_urls.txt"
-  else
-    echo "$LOG_PREFIX [VRB] Start trying with cookies..."
-    /venv/bin/twspace_dl -U "https://twitter.com/${TWITTER_ID}" --write-url "master_urls.txt" --input-cookie-file "$COOKIES_PATH" -o "$COOKIES_PATH"
-  fi
+  echo "$LOG_PREFIX Start trying..."
+  /venv/bin/twspace_dl -U "https://twitter.com/${TWITTER_ID}" --write-url "master_urls.txt" --input-cookie-file "$COOKIES_PATH"
 
-  echo "$LOG_PREFIX [VRB] Sleep $INTERVAL sec."
+  echo "$LOG_PREFIX Sleep $INTERVAL sec."
   sleep "$INTERVAL"
 done
