@@ -22,4 +22,4 @@ jobs:
           isort **/**.py
           git config --global user.name 'Auto format'
           git config --global user.email 'format@github.com'
-          git diff --quiet && git diff --staged --quiet || git commit -am 'Formatted using isort and black' && git push
+          git diff --quiet && git diff --staged --quiet || git commit -am 'chore: formatted using isort and black' && git push
