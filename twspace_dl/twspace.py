@@ -49,9 +49,7 @@ class Twspace(dict):
             self["url"] = "https://twitter.com/i/spaces/" + self["id"]
             self["title"] = root["title"]
             try:
-                start_at = datetime.fromtimestamp(
-                    int(root["started_at"]) / 1000
-                )
+                start_at = datetime.fromtimestamp(int(root["started_at"]) / 1000)
             except ValueError as err:
                 sched_start = datetime.fromtimestamp(
                     int(root["scheduled_start"]) / 1000
