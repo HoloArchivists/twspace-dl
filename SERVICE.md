@@ -27,7 +27,7 @@ systemctl --user daemon-reload
 systemctl --user start twspace-dl@USER_ID.service
 ```
 
-`USER_ID` is the part after `https://twitter.com/` in the url of a twitter profile (i.e `https://twitter.com/USER_ID`)
+`USER_ID` is the part after `https://x.com/` in the url of a twitter profile (i.e `https://x.com/USER_ID`)
 
 To keep it working after restarts run:
 
@@ -45,7 +45,7 @@ sudo systemctl daemon-reload
 sudo systemctl start twspace-dl@USER_ID.service
 ```
 
-`USER_ID` is the part after `https://twitter.com/` in the url of a twitter profile (i.e `https://twitter.com/USER_ID`)
+`USER_ID` is the part after `https://x.com/` in the url of a twitter profile (i.e `https://x.com/USER_ID`)
 
 To keep it working after restarts run:
 

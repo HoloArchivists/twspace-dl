@@ -42,7 +42,7 @@ class Twspace(dict):
             self.source = metadata
             self.root = root
             self["id"] = root["rest_id"]
-            self["url"] = "https://twitter.com/i/spaces/" + self["id"]
+            self["url"] = "https://x.com/i/spaces/" + self["id"]
             self["title"] = root["title"]
             try:
                 self["start_date"] = datetime.fromtimestamp(
@@ -146,7 +146,7 @@ class Twspace(dict):
             raise ValueError(
                 (
                     "Input URL is not valid.\n"
-                    "The URL format should 'https://twitter.com/i/spaces/<space_id>'"
+                    "The URL format should 'https://x.com/i/spaces/<space_id>'"
                 )
             ) from err
         return cls(cls._metadata(space_id))

@@ -88,7 +88,7 @@ class APIClient:
     """Base API client."""
 
     """Base URL of the API."""
-    _API_URL = "https://twitter.com/i/api"
+    _API_URL = "https://x.com/i/api"
 
     def __init__(self, client: HTTPClient, path: str, cookies: dict[str, str]) -> None:
         """Initialize the API client.
@@ -253,9 +253,9 @@ class GraphQLAPI(APIClient):
         """Retrieve the numeric user ID (`rest_id`) of the user that the specified profile URL linked to.
 
         Supported URL formats:
-        - https://twitter.com/<screen_name>
-        - http://twitter.com/<screen_name>
-        - twitter.com/<screen_name>
+        - https://x.com/<screen_name>
+        - http://x.com/<screen_name>
+        - x.com/<screen_name>
         and with any number of trailing slashes (`/`).
 
         - user_url: The URL pointing to the profile of the Twitter user.
