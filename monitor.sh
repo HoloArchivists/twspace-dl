@@ -21,7 +21,7 @@ while true; do
 
   # Start recording
   echo "$LOG_PREFIX Start trying..."
-  /venv/bin/twspace_dl -U "https://twitter.com/${TWITTER_ID}" --write-url "master_urls.txt" --input-cookie-file "$COOKIES_PATH"
+  /venv/bin/twspace_dl -U "https://x.com/${TWITTER_ID}" --write-url "master_urls.txt" --input-cookie-file "$COOKIES_PATH"
 
   echo "$LOG_PREFIX Sleep $INTERVAL sec."
   sleep "$INTERVAL"
