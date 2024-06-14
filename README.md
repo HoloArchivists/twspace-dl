@@ -16,7 +16,7 @@
   <p>A python module to download twitter spaces.</p>
 </div>
 
-## Screensots
+## Screenshots
 
 <details>
 <summary>GUI</summary>
