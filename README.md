@@ -16,6 +16,8 @@
   <p>A python module to download twitter spaces.</p>
 </div>
 
+***The project is under repair, but you can still use it by installing the library through GitHub (not pip).***
+
 ## Screenshots
 
 <details>
