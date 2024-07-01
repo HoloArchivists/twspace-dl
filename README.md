@@ -16,11 +16,6 @@
   <p>A python module to download twitter spaces.</p>
 </div>
 
-# The project is under repair, but you can still use it by installing the library from source (not Pypi).
-```bash
-pip install git+https://github.com/HoloArchivists/twspace-dl@gooey
-```
-
 ## Screenshots
 
 <details>
@@ -41,11 +36,11 @@ pip install git+https://github.com/HoloArchivists/twspace-dl@gooey
 
 </details>
 
-
 ## Requirements
 
 - `ffmpeg` if not using portable binaries.
-- A logged in user's cookies file exported from Twitter in the [Netscape format](https://curl.se/docs/http-cookies.html).
+- A logged in user's cookies file exported from Twitter in
+  the [Netscape format](https://curl.se/docs/http-cookies.html).
 
 ## Install
 
@@ -163,13 +158,20 @@ output:
 You can use the following identifiers for the formatting
 
 ```python
-%(title)s
-%(id)s
-%(start_date)s
-%(creator_name)s
-%(creator_screen_name)s
-%(url)s
-%(creator_id)s
+%(title)
+s
+%(id)
+s
+%(start_date)
+s
+%(creator_name)
+s
+%(creator_screen_name)
+s
+%(url)
+s
+%(creator_id)
+s
 ```
 
 Example: `[%(creator_screen_name)s]-%(title)s|%(start_date)s`
