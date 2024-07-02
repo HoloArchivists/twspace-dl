@@ -2,7 +2,7 @@
 name = "twspace-dl"
 version = "2024.7.2.1"
 description = "The only tool to record Twitter spaces (yet)"
-authors = ["Ryu1845 <ryu@tpgjbo.xyz>"]
+authors = ["Ryu1845 <ryu@tpgjbo.xyz>", "erfan_rfmhr <erfan.arefmehr@gmail.com>"]
 readme = "README.md"
 license = "GPL-2.0-only"
 classifiers = [
