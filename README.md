@@ -16,10 +16,6 @@
   <p>A python module to download twitter spaces.</p>
 </div>
 
-# The project is under repair, but you can still use it by installing the library from source (not Pypi).
-```bash
-pip install git+https://github.com/HoloArchivists/twspace-dl@gooey
-```
 
 ## Screenshots
 
