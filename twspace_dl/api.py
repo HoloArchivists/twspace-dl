@@ -265,7 +265,7 @@ class GraphQLAPI(APIClient):
         - raise RuntimeError: If the specified URL is not a valid Twitter user profile URL.
         """
         if match := re.match(
-            r"^(?:https?:\/\/|)twitter\.com\/(?P<screen_name>\w+)$", user_url.strip("/")
+            r"^(?:https?:\/\/|)x\.com\/(?P<screen_name>\w+)$", user_url.strip("/")
         ):
             return self.user_id(match.group("screen_name"))
         raise RuntimeError(f"Invalid Twitter user URL: {user_url}")
