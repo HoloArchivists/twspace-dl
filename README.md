@@ -16,8 +16,9 @@
   <p>A python module to download twitter spaces.</p>
 </div>
 
-## History
-[![Star History Chart](https://api.star-history.com/svg?repos=bytebase/star-history&type=Date)](https://star-history.com/#bytebase/star-history&Date)
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=HoloArchivists/twspace-dl&type=Date)](https://star-history.com/#HoloArchivists/twspace-dl&Date)
 
 ## Screenshots
 
